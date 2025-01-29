@@ -3,35 +3,80 @@ import random;
 import csv;
 
 #code works by assuming graph is coming in as adjacency matrix
-alpha = 1
-beta = 1
+alpha = 1  #weight of pheromones
+beta = 2   #weight of edge weights
+
+def prims(nodes, edges):
+  seenNodes = [False] * len(nodes)
+  seenNodes[0] = True
+  tree = []
+
+  while (False in seenNodes):
+    oldNodeIndex = None
+    newNodeIndex = None
+    smallestEdge = 10000000000
+    for i in range(len(nodes)):
+      if seenNodes[i] == True:
+        for j in range(len(edges[i])):
+          if edges[i][j] < smallestEdge and edges[i][j] != 0 and seenNodes[j] == False:
+            newNodeIndex = j
+            oldNodeIndex = i
+            smallestEdge = edges[i][j]
+            # print(newNodeIndex)
+
+    # print(newNodeIndex)
+    tree.append([oldNodeIndex, newNodeIndex])
+    seenNodes[newNodeIndex] = True
+    
+  
+  print(tree)
+  print(calcWeight(tree, edges))
+  print(len(tree))
+  return
+
 
 #needs to be able to update graph weights 
 def runAnt(maxIterations, nodes, edges, phers):
   i = 0
-  lowBound = 1
-  highBound = (len(nodes))^3 * lowBound
+  kruskalBounds = [1, ((len(edges)*len(edges)) - len(nodes) + 1) * (math.log(len(nodes))) * 1]
+  broderBounds = [1, (len(nodes))^3 * 1]
 
-  curTree = pathConstruction(nodes, edges, phers)
+  ##BRODER CONSTRUCTION - DO NOT DELETE - UNCOMMENT TO RUN
+
+  # broderTree = broderConstruction(nodes, edges, phers)
+  # while (i < maxIterations):
+  #   i += 1
+  #   newTree = broderConstruction(nodes, edges, phers)
+  #   if calcWeight(newTree, edges) <= calcWeight(broderTree, edges):
+  #     #update pheremone values
+  #     for rowIndex in range(len(edges)):
+  #       for colIndex in range(len(edges[rowIndex])):
+  #         if [rowIndex, colIndex] in newTree:
+  #           phers[rowIndex][colIndex] = broderBounds[1]
+  #         else:
+  #           phers[rowIndex][colIndex] = broderBounds[0]
+  #     broderTree = newTree
+
+
+  kruskalTree = kruskalConstruction(nodes, edges, phers)
   while (i < maxIterations):
     i += 1
-    newTree = pathConstruction(nodes, edges, phers)
-    if calcWeight(newTree, edges) <= calcWeight(curTree, edges):
+    newTree = kruskalConstruction(nodes, edges, phers)
+    if calcWeight(newTree, edges) <= calcWeight(kruskalTree, edges):
       #update pheremone values
-      for rowIndex in range(len(edges)):
-        for colIndex in range(len(edges[rowIndex])):
-          if [rowIndex, colIndex] in newTree:
-            phers[rowIndex][colIndex] = highBound
-          else:
-            phers[rowIndex][colIndex] = lowBound
-      curTree = newTree
+      phers = [[kruskalBounds[0]] * len(edges)] * len(edges)
+      for edge in newTree:
+        phers[edge[0]][edge[1]] = kruskalBounds[1]
+      kruskalTree = newTree
+
 
   # print("tree complete")
-  print(curTree)
-  # print(len(curTree))
+  print(kruskalTree)
+  print("Total edge weight: " + str(calcWeight(kruskalTree, edges)))
+  print(len(kruskalTree))
 
 #input: needs to be able to navigate full graph G with weights and everything else
-def pathConstruction(nodes, edges, phers):
+def broderConstruction(nodes, edges, phers):
 
   #init variables and start node
   tree = []
@@ -52,7 +97,6 @@ def pathConstruction(nodes, edges, phers):
       # print(math.pow(tau, alpha))
       totalWeight += math.pow(tau, alpha) * math.pow(eta, beta)
 
-    #TODO
     #choose neighbor v based on prob value
     num = random.random()
     totalProb = 0
@@ -77,11 +121,80 @@ def pathConstruction(nodes, edges, phers):
   
   return tree
 
+def kruskalConstruction(nodes, edges, phers):
+  
+  #start without an edge
+  curEdge = [-1, -1]
+  curTree = []
+  k = 0
+
+  posEdges = calcPossibleEdges(edges, curTree)
+
+  while posEdges:
+    weightSum = 0
+    for edge in posEdges:
+      tau = phers[edge[0]][edge[1]]
+      eta = 1/edges[edge[0]][edge[1]]
+      weightSum += (math.pow(tau, alpha)) * (math.pow(eta, beta))
+
+    num = random.random()
+    totalProb = 0
+    #calculate which neighbor to go to
+    for edge in posEdges:
+      tau = phers[edge[0]][edge[1]]
+      eta = 1/edges[edge[0]][edge[1]]
+      totalProb += (math.pow(tau, alpha) * math.pow(eta, beta)) / weightSum
+
+      if (totalProb > num):
+        curTree.append(edge)
+        break
+    posEdges = calcPossibleEdges(edges, curTree)
+    k += 1
+
+  # print(calcWeight(curTree, edges))
+  return curTree
+  # print(curTree)
+  # print(len(curTree))
+  
+
+#helper function for kruskalConstruct
+def calcPossibleEdges(edges, tree):
+  posEdges = []
+
+  #add edges to possible edges if:
+  #   the aren't already in the tree
+  #   they won't form a cycle with the current tree on the graph
+  for row in range(len(edges)):
+    for col in range(len(edges)):
+      if edges[row][col] == 0:
+        continue
+      if [row, col] not in tree:
+        if noCycle(tree, [row, col]):
+          posEdges.append([row, col])
+
+  return posEdges
+
+#calculates if added edge would form a cycle
+def noCycle(curEdges, newEdge):
+  curNodes = []
+  pointerNodes = []
+
+  for edge in curEdges:
+    curNodes.append(edge[1])
+    pointerNodes.append(edge[0])
+  
+  if newEdge[1] in curNodes:
+    return False
+  if (newEdge[1] and newEdge[0]) in pointerNodes:
+    return False
+
+  return True
+
 #BIG TODO's:
-# make calcWeight function
-# find way to store pheremone and edge weights
-# implement randomWalk for init
-# finish equations
+# implement new constructions
+# visuals to compare methods
+# implement optimal algorithm to compare results
+# GraphViz
 
 def calcWeight(tree, edges):
   #sum all weights from given collection of edges
@@ -95,7 +208,6 @@ def main():
 
   capitals = []
   edges = []
-  phers = [[1] * 50] * 50
 
 
   with open('full-mst-data.csv', mode ='r')as file:
@@ -109,13 +221,13 @@ def main():
         row = list(map(int, lines[1::]))
         edges.append(row)
 
-  print("Hello World")
-  # print(capitals)
-  # print(edges[5])
-  # print(len(phers))
-  # print(len(phers[0]))
+  phers = [[1] * len(edges)] * len(edges)
 
-  runAnt(200, capitals, edges, phers)
+  print("Hello World")
+
+  runAnt(500, capitals, edges, phers)
+  print("Optimal: 12148")
+  # prims(capitals, edges)
 
 
 if __name__ == "__main__":
