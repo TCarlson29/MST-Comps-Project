@@ -4,7 +4,7 @@ import csv;
 
 #code works by assuming graph is coming in as adjacency matrix
 alpha = 1  #weight of pheromones
-beta = 2   #weight of edge weights
+beta = 1   #weight of edge weights
 
 def prims(nodes, edges):
   seenNodes = [False] * len(nodes)
@@ -40,6 +40,7 @@ def runAnt(maxIterations, nodes, edges, phers):
   i = 0
   kruskalBounds = [1, ((len(edges)*len(edges)) - len(nodes) + 1) * (math.log(len(nodes))) * 1]
   broderBounds = [1, (len(nodes))^3 * 1]
+  
 
   ##BRODER CONSTRUCTION - DO NOT DELETE - UNCOMMENT TO RUN
 
@@ -53,27 +54,46 @@ def runAnt(maxIterations, nodes, edges, phers):
   #       for colIndex in range(len(edges[rowIndex])):
   #         if [rowIndex, colIndex] in newTree:
   #           phers[rowIndex][colIndex] = broderBounds[1]
+  #           phers[colIndex][rowIndex] = broderBounds[1]
   #         else:
   #           phers[rowIndex][colIndex] = broderBounds[0]
+  #           phers[colIndex][rowIndex] = broderBounds[0]
   #     broderTree = newTree
 
 
-  kruskalTree = kruskalConstruction(nodes, edges, phers)
+  #KRUSKAL CONSTRUCT
+
+  # kruskalTree = kruskalConstruction(nodes, edges, phers)
+  # while (i < maxIterations):
+  #   i += 1
+  #   newTree = kruskalConstruction(nodes, edges, phers)
+  #   if calcWeight(newTree, edges) <= calcWeight(kruskalTree, edges):
+  #     #update pheremone values
+  #     phers = [[kruskalBounds[0]] * len(edges)] * len(edges)
+  #     for edge in newTree:
+  #       phers[edge[0]][edge[1]] = kruskalBounds[1]
+  #     kruskalTree = newTree
+
+
+  primTree = primConstruction(nodes, edges, phers)
+  bestWeight = calcWeight(primTree, edges)
+  primBounds = [math.pow(10, -6), 1 / bestWeight]
   while (i < maxIterations):
     i += 1
-    newTree = kruskalConstruction(nodes, edges, phers)
-    if calcWeight(newTree, edges) <= calcWeight(kruskalTree, edges):
-      #update pheremone values
-      phers = [[kruskalBounds[0]] * len(edges)] * len(edges)
+    newTree = primConstruction(nodes, edges, phers)
+    if calcWeight(newTree, edges) <= calcWeight(primTree, edges):
+      print("better tree found")
+      bestWeight = calcWeight(primTree, edges)
+      primBounds = [math.pow(10, -6), 1 / bestWeight]
+      phers = [[primBounds[0]] * len(edges)] * len(edges)
       for edge in newTree:
-        phers[edge[0]][edge[1]] = kruskalBounds[1]
-      kruskalTree = newTree
+        phers[edge[0]][edge[1]] = primBounds[1]
 
 
-  # print("tree complete")
-  print(kruskalTree)
-  print("Total edge weight: " + str(calcWeight(kruskalTree, edges)))
-  print(len(kruskalTree))
+  print("tree complete")
+  print(primTree)
+  print("Total edge weight: " + str(calcWeight(primTree, edges)))
+  print(len(primTree))
 
 #input: needs to be able to navigate full graph G with weights and everything else
 def broderConstruction(nodes, edges, phers):
@@ -156,6 +176,39 @@ def kruskalConstruction(nodes, edges, phers):
   # print(curTree)
   # print(len(curTree))
   
+def primConstruction(nodes, edges, phers):
+  seenNodes = [False] * len(nodes)
+  seenNodes[random.randrange(len(nodes)-1)] = True
+  curTree = []
+
+  while False in seenNodes:
+    weightSum = 0
+    posEdges = []
+    for seen in range(len(seenNodes)):
+      if seenNodes[seen] == True:
+        for new in range(len(edges[seen])):
+          if seenNodes[new] == False:
+            tau = phers[seen][new]
+            eta = 1 / math.pow(edges[seen][new], 2)
+            posEdges.append([seen, new])
+            weightSum += (math.pow(tau, alpha)) * (math.pow(eta, beta))
+
+    num = random.random()
+    totalProb = 0
+    #calculate which neighbor to go to
+    for edge in posEdges:
+      tau = phers[edge[0]][edge[1]]
+      eta = 1 / math.pow(edges[edge[0]][edge[1]], 2)
+      totalProb += (math.pow(tau, alpha) * math.pow(eta, beta)) / weightSum
+
+      if (totalProb > num):
+        # print("added edge")
+        curTree.append(edge)
+        seenNodes[edge[1]] = True
+        break
+
+  return curTree
+
 
 #helper function for kruskalConstruct
 def calcPossibleEdges(edges, tree):
@@ -174,7 +227,7 @@ def calcPossibleEdges(edges, tree):
 
   return posEdges
 
-#calculates if added edge would form a cycle
+#calculates if added edge would form a cycle (kruskal)
 def noCycle(curEdges, newEdge):
   curNodes = []
   pointerNodes = []
@@ -195,6 +248,7 @@ def noCycle(curEdges, newEdge):
 # visuals to compare methods
 # implement optimal algorithm to compare results
 # GraphViz
+# fix pheromones for directed/undirected??
 
 def calcWeight(tree, edges):
   #sum all weights from given collection of edges
