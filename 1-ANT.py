@@ -3,10 +3,11 @@ import random;
 import csv;
 
 #code works by assuming graph is coming in as adjacency matrix
-alpha = 1  #weight of pheromones
-beta = 1   #weight of edge weights
+alpha = 0.1  #weight of pheromones
+beta = 60   #weight of edge weights
 
-def prims(nodes, edges):
+#actual running of prims to test optimality
+def truePrims(nodes, edges):
   seenNodes = [False] * len(nodes)
   seenNodes[0] = True
   tree = []
@@ -37,65 +38,78 @@ def prims(nodes, edges):
 
 #needs to be able to update graph weights 
 def runAnt(maxIterations, nodes, edges, phers):
+
+  # broderTree = broderUpdate(maxIterations, nodes, edges, phers)
+
+  kruskalTree = kruskalUpdate(maxIterations, nodes, edges, phers)
+
+  # primTree = primUpdate(maxIterations, nodes, edges, phers)
+
+  print("trees complete")
+  print(kruskalTree)
+  print("Total edge weight: " + str(calcWeight(kruskalTree, edges)))
+  print(len(kruskalTree))
+
+# runs iterations of broderConstruct and updates pheromone values
+def broderUpdate(maxIterations, nodes, edges, phers):
+  i = 0
+  broderBounds = [1, (len(nodes))^3 * 1]
+  broderTree = broderConstruction(nodes, edges, phers)
+  while (i < maxIterations):
+    i += 1
+    newTree = broderConstruction(nodes, edges, phers)
+    if calcWeight(newTree, edges) <= calcWeight(broderTree, edges):
+      #update pheremone values
+      for rowIndex in range(len(edges)):
+        for colIndex in range(len(edges[rowIndex])):
+          if [rowIndex, colIndex] in newTree:
+            phers[rowIndex][colIndex] = broderBounds[1]
+            phers[colIndex][rowIndex] = broderBounds[1]
+          else:
+            phers[rowIndex][colIndex] = broderBounds[0]
+            phers[colIndex][rowIndex] = broderBounds[0]
+      broderTree = newTree
+  return
+
+# runs iterations of kruskalConstruct and updates pheromone values
+def kruskalUpdate(maxIterations, nodes, edges, phers):
   i = 0
   kruskalBounds = [1, ((len(edges)*len(edges)) - len(nodes) + 1) * (math.log(len(nodes))) * 1]
-  broderBounds = [1, (len(nodes))^3 * 1]
-  
+  kruskalTree = kruskalConstruction(nodes, edges, phers)
+  while (i < maxIterations):
+    i += 1
+    newTree = kruskalConstruction(nodes, edges, phers)
+    if calcWeight(newTree, edges) <= calcWeight(kruskalTree, edges):
+      #update pheremone values
+      phers = [[kruskalBounds[0]] * len(edges)] * len(edges)
+      for edge in newTree:
+        phers[edge[0]][edge[1]] = kruskalBounds[1]
+        #NOT adding opposite edge to prevent cycling (kruskal-specific)
+      kruskalTree = newTree
+  return kruskalTree
 
-  ##BRODER CONSTRUCTION - DO NOT DELETE - UNCOMMENT TO RUN
-
-  # broderTree = broderConstruction(nodes, edges, phers)
-  # while (i < maxIterations):
-  #   i += 1
-  #   newTree = broderConstruction(nodes, edges, phers)
-  #   if calcWeight(newTree, edges) <= calcWeight(broderTree, edges):
-  #     #update pheremone values
-  #     for rowIndex in range(len(edges)):
-  #       for colIndex in range(len(edges[rowIndex])):
-  #         if [rowIndex, colIndex] in newTree:
-  #           phers[rowIndex][colIndex] = broderBounds[1]
-  #           phers[colIndex][rowIndex] = broderBounds[1]
-  #         else:
-  #           phers[rowIndex][colIndex] = broderBounds[0]
-  #           phers[colIndex][rowIndex] = broderBounds[0]
-  #     broderTree = newTree
-
-
-  #KRUSKAL CONSTRUCT
-
-  # kruskalTree = kruskalConstruction(nodes, edges, phers)
-  # while (i < maxIterations):
-  #   i += 1
-  #   newTree = kruskalConstruction(nodes, edges, phers)
-  #   if calcWeight(newTree, edges) <= calcWeight(kruskalTree, edges):
-  #     #update pheremone values
-  #     phers = [[kruskalBounds[0]] * len(edges)] * len(edges)
-  #     for edge in newTree:
-  #       phers[edge[0]][edge[1]] = kruskalBounds[1]
-  #     kruskalTree = newTree
-
-
+# runs iterations of primConstruct and updates pheromone values
+def primUpdate(maxIterations, nodes, edges, phers):
+  i = 0
   primTree = primConstruction(nodes, edges, phers)
   bestWeight = calcWeight(primTree, edges)
-  primBounds = [math.pow(10, -6), 1 / bestWeight]
+  primBounds = [math.pow(10, -6), 1 / bestWeight] #bounds update with best weight found
   while (i < maxIterations):
     i += 1
     newTree = primConstruction(nodes, edges, phers)
-    if calcWeight(newTree, edges) <= calcWeight(primTree, edges):
-      print("better tree found")
+    if calcWeight(newTree, edges) <= bestWeight:
+      # print("better tree found")
       bestWeight = calcWeight(primTree, edges)
       primBounds = [math.pow(10, -6), 1 / bestWeight]
       phers = [[primBounds[0]] * len(edges)] * len(edges)
       for edge in newTree:
         phers[edge[0]][edge[1]] = primBounds[1]
+        phers[edge[1]][edge[0]] = primBounds[1]
+
+  return primTree
 
 
-  print("tree complete")
-  print(primTree)
-  print("Total edge weight: " + str(calcWeight(primTree, edges)))
-  print(len(primTree))
-
-#input: needs to be able to navigate full graph G with weights and everything else
+## CONSTRUCTION GRAPHS
 def broderConstruction(nodes, edges, phers):
 
   #init variables and start node
@@ -244,11 +258,10 @@ def noCycle(curEdges, newEdge):
   return True
 
 #BIG TODO's:
-# implement new constructions
+# implement new constructions (?)
+# fix beta bug
 # visuals to compare methods
-# implement optimal algorithm to compare results
 # GraphViz
-# fix pheromones for directed/undirected??
 
 def calcWeight(tree, edges):
   #sum all weights from given collection of edges
