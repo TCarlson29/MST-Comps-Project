@@ -3,8 +3,10 @@ import random;
 import csv;
 
 #code works by assuming graph is coming in as adjacency matrix
-alpha = 0.1  #weight of pheromones
-beta = 60   #weight of edge weights
+alpha = 1  #weight of pheromones
+beta = 6   #weight of edge weights
+
+#optimal for kruskals: a=0, b>=6*wmax*logn
 
 #actual running of prims to test optimality
 def truePrims(nodes, edges):
@@ -50,6 +52,7 @@ def runAnt(maxIterations, nodes, edges, phers):
   print("Total edge weight: " + str(calcWeight(kruskalTree, edges)))
   print(len(kruskalTree))
 
+
 # runs iterations of broderConstruct and updates pheromone values
 def broderUpdate(maxIterations, nodes, edges, phers):
   i = 0
@@ -74,18 +77,21 @@ def broderUpdate(maxIterations, nodes, edges, phers):
 # runs iterations of kruskalConstruct and updates pheromone values
 def kruskalUpdate(maxIterations, nodes, edges, phers):
   i = 0
-  kruskalBounds = [1, ((len(edges)*len(edges)) - len(nodes) + 1) * (math.log(len(nodes))) * 1]
   kruskalTree = kruskalConstruction(nodes, edges, phers)
+  bestWeight = calcWeight(kruskalTree, edges)
+  kruskalBounds = [math.pow(10, -6), 1 / bestWeight]
   while (i < maxIterations):
     i += 1
     newTree = kruskalConstruction(nodes, edges, phers)
+    # print("new tree made")
     if calcWeight(newTree, edges) <= calcWeight(kruskalTree, edges):
       #update pheremone values
       phers = [[kruskalBounds[0]] * len(edges)] * len(edges)
       for edge in newTree:
         phers[edge[0]][edge[1]] = kruskalBounds[1]
-        #NOT adding opposite edge to prevent cycling (kruskal-specific)
+        phers[edge[1]][edge[0]] = kruskalBounds[1]
       kruskalTree = newTree
+      print("better tree found")
   return kruskalTree
 
 # runs iterations of primConstruct and updates pheromone values
@@ -161,8 +167,9 @@ def kruskalConstruction(nodes, edges, phers):
   curEdge = [-1, -1]
   curTree = []
   k = 0
+  unionImplement = [0 + i for i in range(len(nodes))]
 
-  posEdges = calcPossibleEdges(edges, curTree)
+  posEdges = calcPossibleEdges(edges, curTree, unionImplement)
 
   while posEdges:
     weightSum = 0
@@ -180,9 +187,14 @@ def kruskalConstruction(nodes, edges, phers):
       totalProb += (math.pow(tau, alpha) * math.pow(eta, beta)) / weightSum
 
       if (totalProb > num):
+        # print('newedge')
+        # print(unionImplement)
+        # print("edge added: " + str(edge))
         curTree.append(edge)
+        union(edge, unionImplement)
+        # print(unionImplement)
         break
-    posEdges = calcPossibleEdges(edges, curTree)
+    posEdges = calcPossibleEdges(edges, curTree, unionImplement)
     k += 1
 
   # print(calcWeight(curTree, edges))
@@ -223,9 +235,43 @@ def primConstruction(nodes, edges, phers):
 
   return curTree
 
+def deleteConstruction(nodes, edges, phers):
+  curTree = []
+  totalWeight = 0
+  for row in edges:
+    for edge in row:
+      totalWeight += edge
+
+  # edgeProbs = [0] * len(edges) * len(edges)
+  calcSum = 0
+  for row in range(len(edges)):
+    for col in range(len(edges)):
+      calcSum += (totalWeight - edges[row][col])
+
+  #need dict for probs to be able to sort and re-find edges
+  edgeProbs = {}
+  for row in range(len(edges)):
+    for col in range(len(edges)):
+      edgeProbs[[row, col]] = (totalWeight - edges[row][col]) / calcSum
+
+  sortedEdgeProbs = sorted(edgeProbs.items(), key = lambda ele: ele[1])
+  numDeletedEdges = (len(nodes) * (len(nodes)-1) / 2) - len(nodes) + 1
+
+  while (numDeletedEdges > 0):
+    # remove numDeletedEdges edges from sortedEdgeProbs
+    # removes the first nth worst edges
+    sortedEdgeProbs.pop()
+    numDeletedEdges -= 1
+
+  #TODO:
+  #start from the minimum prob route
+  #check for disconnected graph, if so connect subgraphs with max prob route
+  #if graph has cycle/loop, delete minimum prob route from cycle
+
+  return curTree
 
 #helper function for kruskalConstruct
-def calcPossibleEdges(edges, tree):
+def calcPossibleEdges(edges, tree, unionImplement):
   posEdges = []
 
   #add edges to possible edges if:
@@ -235,27 +281,48 @@ def calcPossibleEdges(edges, tree):
     for col in range(len(edges)):
       if edges[row][col] == 0:
         continue
-      if [row, col] not in tree:
-        if noCycle(tree, [row, col]):
+      if ([row, col] not in tree) and ([col, row] not in tree):
+        if noCycle([row, col], unionImplement):
           posEdges.append([row, col])
 
   return posEdges
 
 #calculates if added edge would form a cycle (kruskal)
-def noCycle(curEdges, newEdge):
-  curNodes = []
-  pointerNodes = []
-
-  for edge in curEdges:
-    curNodes.append(edge[1])
-    pointerNodes.append(edge[0])
-  
-  if newEdge[1] in curNodes:
+def noCycle(newEdge, unionImplement):
+  if (find(newEdge[0], unionImplement) == find(newEdge[1], unionImplement)):
     return False
-  if (newEdge[1] and newEdge[0]) in pointerNodes:
-    return False
-
   return True
+
+def isConnected(tree, curNode, nodes, visited):
+
+  # visited = [False] * len(nodes)
+  visited[curNode] = [True]
+
+  for edge in tree:
+    if curNode in edge:
+      if not visited[edge[1]]:
+        isConnected(tree, edge[1], nodes, visited)
+      if not visited[edge[0]]:
+        isConnected(tree, edge[0], nodes, visited)
+
+  if False in visited:
+    return False
+  return True
+
+
+
+#Union-Find implementation
+def find(x, unionImplement):
+  while (x != unionImplement[x]):
+    x = unionImplement[x]
+  return x
+
+def union(edge, unionImplement):
+  rootX = find(edge[0], unionImplement)
+  rootY = find(edge[1], unionImplement)
+  unionImplement[rootX] = rootY
+  return unionImplement
+
 
 #BIG TODO's:
 # implement new constructions (?)
@@ -292,9 +359,14 @@ def main():
 
   print("Hello World")
 
-  runAnt(500, capitals, edges, phers)
+
+  runAnt(5, capitals, edges, phers)
   print("Optimal: 12148")
   # prims(capitals, edges)
+
+
+  # ex = [0, 0, 0, 1, 5]
+  # print(noCycle([2, 3], ex))
 
 
 if __name__ == "__main__":
