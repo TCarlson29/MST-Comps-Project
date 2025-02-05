@@ -4,7 +4,7 @@ import csv;
 
 #code works by assuming graph is coming in as adjacency matrix
 alpha = 1  #weight of pheromones
-beta = 6   #weight of edge weights
+beta = 1   #weight of edge weights
 
 #optimal for kruskals: a=0, b>=6*wmax*logn
 
@@ -41,23 +41,34 @@ def truePrims(nodes, edges):
 #needs to be able to update graph weights 
 def runAnt(maxIterations, nodes, edges, phers):
 
-  # broderTree = broderUpdate(maxIterations, nodes, edges, phers)
+  broderTree = broderUpdate(maxIterations, nodes, edges, phers)
+  print("broderDone")
 
   kruskalTree = kruskalUpdate(maxIterations, nodes, edges, phers)
+  print("KruskalDone")
 
-  # primTree = primUpdate(maxIterations, nodes, edges, phers)
+  primTree = primUpdate(maxIterations, nodes, edges, phers)
+  print("prim Done")
+
+  deleteTree = deleteConstruction(nodes, edges)
+  print("deleteDone")
 
   print("trees complete")
-  print(kruskalTree)
-  print("Total edge weight: " + str(calcWeight(kruskalTree, edges)))
-  print(len(kruskalTree))
+  # print(deleteTree)
+  print("Broder Total edge weight: " + str(calcWeight(broderTree, edges)))
+  print("Kruskal Total edge weight: " + str(calcWeight(kruskalTree, edges)))
+  print("Prims Total edge weight: " + str(calcWeight(primTree, edges)))
+  print("Delete Total edge weight: " + str(calcWeight(deleteTree, edges)))
+  # print(len(deleteTree))
 
 
 # runs iterations of broderConstruct and updates pheromone values
 def broderUpdate(maxIterations, nodes, edges, phers):
   i = 0
-  broderBounds = [1, (len(nodes))^3 * 1]
   broderTree = broderConstruction(nodes, edges, phers)
+  bestWeight = calcWeight(broderTree, edges)
+  broderBounds = [math.pow(10, -6), 1 / bestWeight]
+  # broderBounds = [1, (len(nodes))^3 * 1]
   while (i < maxIterations):
     i += 1
     newTree = broderConstruction(nodes, edges, phers)
@@ -72,7 +83,7 @@ def broderUpdate(maxIterations, nodes, edges, phers):
             phers[rowIndex][colIndex] = broderBounds[0]
             phers[colIndex][rowIndex] = broderBounds[0]
       broderTree = newTree
-  return
+  return broderTree
 
 # runs iterations of kruskalConstruct and updates pheromone values
 def kruskalUpdate(maxIterations, nodes, edges, phers):
@@ -91,7 +102,7 @@ def kruskalUpdate(maxIterations, nodes, edges, phers):
         phers[edge[0]][edge[1]] = kruskalBounds[1]
         phers[edge[1]][edge[0]] = kruskalBounds[1]
       kruskalTree = newTree
-      print("better tree found")
+      # print("better tree found")
   return kruskalTree
 
 # runs iterations of primConstruct and updates pheromone values
@@ -114,6 +125,7 @@ def primUpdate(maxIterations, nodes, edges, phers):
 
   return primTree
 
+##delete construction doesn't need update rule, also doesn't use iteration
 
 ## CONSTRUCTION GRAPHS
 def broderConstruction(nodes, edges, phers):
@@ -235,40 +247,83 @@ def primConstruction(nodes, edges, phers):
 
   return curTree
 
-def deleteConstruction(nodes, edges, phers):
+def deleteConstruction(nodes, edges):
   curTree = []
   totalWeight = 0
   for row in edges:
     for edge in row:
       totalWeight += edge
-
+  totalWeight /= 2
   # edgeProbs = [0] * len(edges) * len(edges)
   calcSum = 0
   for row in range(len(edges)):
-    for col in range(len(edges)):
+    for col in range(row+1, len(edges)):
       calcSum += (totalWeight - edges[row][col])
 
   #need dict for probs to be able to sort and re-find edges
   edgeProbs = {}
   for row in range(len(edges)):
-    for col in range(len(edges)):
-      edgeProbs[[row, col]] = (totalWeight - edges[row][col]) / calcSum
+    for col in range(row+1, len(edges)):
+      edgeProbs[(row, col)] = (totalWeight - edges[row][col]) / calcSum
 
-  sortedEdgeProbs = sorted(edgeProbs.items(), key = lambda ele: ele[1])
+  # print(len(edgeProbs))
+  sortedEdgeProbs = dict(sorted(edgeProbs.items(), key = lambda ele: ele[1], reverse=True))
   numDeletedEdges = (len(nodes) * (len(nodes)-1) / 2) - len(nodes) + 1
 
+  curTree = sortedEdgeProbs.copy()
   while (numDeletedEdges > 0):
-    # remove numDeletedEdges edges from sortedEdgeProbs
     # removes the first nth worst edges
-    sortedEdgeProbs.pop()
+    curTree.popitem()
+    # print(len(curTree))
     numDeletedEdges -= 1
 
-  #TODO:
-  #start from the minimum prob route
-  #check for disconnected graph, if so connect subgraphs with max prob route
-  #if graph has cycle/loop, delete minimum prob route from cycle
+  unusedEdges = {k:v for k,v in sortedEdgeProbs.items() if k not in curTree} ##stackoverflow solution
+  # print(unusedEdges)
 
+  #SECTION 2
+  #Adding enough edges to make a full tree
+  visited = [False] * len(nodes)
+  curVis = isConnected(curTree, 0, nodes, visited)
+  # print(curVis)
+  while False in curVis:
+    # print("still False")
+    numFalse = curVis.count(False)
+    # print(numFalse)
+    tempTree = curTree.copy()
+    addedEdges = {}
+    for edge in unusedEdges:
+      tempTree = curTree.copy()
+      tempTree.update({edge: unusedEdges[edge]})
+      newVis = isConnected(tempTree, 0, nodes, visited)
+      newNumFalse = newVis.count(False)
+      if newNumFalse < numFalse:
+        curTree.update({edge: unusedEdges[edge]})
+        addedEdges.update({edge: unusedEdges[edge]})
+        curVis = newVis
+    unusedEdges = {k:v for k,v in unusedEdges.items() if k not in addedEdges}
+
+  #SECTION 3
+  # Removing all redundant edges from the tree
+  curTree = dict(sorted(curTree.items(), key = lambda ele: ele[1]))
+  deletedTree = curTree.copy()
+
+  for edge in curTree:
+    visited = [False] * len(nodes)
+    tempTree = deletedTree.copy()
+    tempTree.pop(edge)
+    newVis = isConnected(tempTree, 0, nodes, visited)
+    # print(newVis)
+    if False in newVis:
+      # print("false")
+      continue
+    else:
+      deletedTree.pop(edge)
+      # print(len(deletedTree))
+
+  curTree = deletedTree
   return curTree
+
+
 
 #helper function for kruskalConstruct
 def calcPossibleEdges(edges, tree, unionImplement):
@@ -293,22 +348,21 @@ def noCycle(newEdge, unionImplement):
     return False
   return True
 
+#check if graph is connected
+#returns a list of seen nodes (DFS)
 def isConnected(tree, curNode, nodes, visited):
-
   # visited = [False] * len(nodes)
-  visited[curNode] = [True]
+  visited[curNode] = True
+  # print(tree.)
 
-  for edge in tree:
+  for edge in tree.keys():
     if curNode in edge:
       if not visited[edge[1]]:
-        isConnected(tree, edge[1], nodes, visited)
+        visited = isConnected(tree, edge[1], nodes, visited)
       if not visited[edge[0]]:
-        isConnected(tree, edge[0], nodes, visited)
+        visited = isConnected(tree, edge[0], nodes, visited)
 
-  if False in visited:
-    return False
-  return True
-
+  return visited
 
 
 #Union-Find implementation
@@ -323,10 +377,7 @@ def union(edge, unionImplement):
   unionImplement[rootX] = rootY
   return unionImplement
 
-
 #BIG TODO's:
-# implement new constructions (?)
-# fix beta bug
 # visuals to compare methods
 # GraphViz
 
@@ -360,13 +411,8 @@ def main():
   print("Hello World")
 
 
-  runAnt(5, capitals, edges, phers)
+  runAnt(100, capitals, edges, phers)
   print("Optimal: 12148")
-  # prims(capitals, edges)
-
-
-  # ex = [0, 0, 0, 1, 5]
-  # print(noCycle([2, 3], ex))
 
 
 if __name__ == "__main__":
