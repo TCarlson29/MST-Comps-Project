@@ -1,12 +1,10 @@
-import math;
-import random;
-import csv;
+import math, random
+import csv, sys
+from time import process_time
 
 #code works by assuming graph is coming in as adjacency matrix
-alpha = 1  #weight of pheromones
-beta = 1   #weight of edge weights
 
-#optimal for kruskals: a=0, b>=6*wmax*logn
+curOptimal = 12148
 
 #actual running of prims to test optimality
 def truePrims(nodes, edges):
@@ -32,46 +30,82 @@ def truePrims(nodes, edges):
     seenNodes[newNodeIndex] = True
     
   
-  print(tree)
-  print(calcWeight(tree, edges))
-  print(len(tree))
-  return
+  # print(tree)
+  # print(calcWeight(tree, edges))
+  # print(len(tree))
+  return calcWeight(tree, edges)
 
 
 #needs to be able to update graph weights 
-def runAnt(maxIterations, nodes, edges, phers):
+def runAnt(maxIterations, nodes, edges, phers, ratios):
 
-  broderTree = broderUpdate(maxIterations, nodes, edges, phers)
+  #RATIOS ARE REPRESENTATIONS OF PHER/EDGE WEIGHTING FOR ACO's
+  # first value = pher weight
+  # second value = edge weight weight
+  broderRatios = [0, 1]
+  kruskRatios = [0, 6]
+  primRatios = [1, 5]
+  if len(ratios) != 0:
+    broderRatios = ratios
+    kruskRatios = ratios
+    primRatios = ratios
+
+  
+  brodStart = process_time()
+  broderTree = broderUpdate(maxIterations, nodes, edges, phers, broderRatios)
+  brodEnd = process_time()
   print("broderDone")
+  print("brod total time elapsed: " + str(brodEnd - brodStart))
 
-  kruskalTree = kruskalUpdate(maxIterations, nodes, edges, phers)
+  kruskStart = process_time()
+  kruskalTree = kruskalUpdate(maxIterations, nodes, edges, phers, kruskRatios)
+  kruskEnd = process_time()
   print("KruskalDone")
+  print("krusk total time elapsed: " + str(kruskEnd - kruskStart))
 
-  primTree = primUpdate(maxIterations, nodes, edges, phers)
+  primStart = process_time()
+  primTree = primUpdate(maxIterations, nodes, edges, phers, primRatios)
+  primEnd = process_time()
   print("prim Done")
+  print("prim total time elapsed: " + str(primEnd - primStart))
 
+  deleteStart = process_time()
   deleteTree = deleteConstruction(nodes, edges)
+  deleteEnd = process_time()
   print("deleteDone")
+  print("delete total time elapsed: " + str(deleteEnd - deleteStart))
 
-  print("trees complete")
-  # print(deleteTree)
-  print("Broder Total edge weight: " + str(calcWeight(broderTree, edges)))
-  print("Kruskal Total edge weight: " + str(calcWeight(kruskalTree, edges)))
-  print("Prims Total edge weight: " + str(calcWeight(primTree, edges)))
-  print("Delete Total edge weight: " + str(calcWeight(deleteTree, edges)))
+
+  print("trees complete\n\n")
+  brodWeight = calcWeight(broderTree, edges)
+  print("Broder Total tree weight: " + str(brodWeight))
+  print("Broder Optimality Ratio: " + str(brodWeight / curOptimal))
+  # print("Broder # of edges: " + str(len(broderTree)))
+  kruskWeight = calcWeight(kruskalTree, edges)
+  print("Kruskal Total tree weight: " + str(kruskWeight))
+  print("Broder Optimality Ratio: " + str(kruskWeight / curOptimal))
+  # print("Kruskal # of edges: " + str(len(kruskalTree)))
+  primWeight = calcWeight(primTree, edges)
+  print("Prims Total tree weight: " + str(primWeight))
+  print("Broder Optimality Ratio: " + str(primWeight / curOptimal))
+  # print("Prims # of edges: " + str(len(primTree)))
+  deleteWeight = calcWeight(deleteTree, edges)
+  print("Delete Total tree weight: " + str(deleteWeight))
+  print("Broder Optimality Ratio: " + str(deleteWeight / curOptimal))
+  # print("Delete # of edges: " + str(len(deleteTree)))
   # print(len(deleteTree))
 
 
 # runs iterations of broderConstruct and updates pheromone values
-def broderUpdate(maxIterations, nodes, edges, phers):
+def broderUpdate(maxIterations, nodes, edges, phers, ratios):
   i = 0
-  broderTree = broderConstruction(nodes, edges, phers)
+  broderTree = broderConstruction(nodes, edges, phers, ratios)
   bestWeight = calcWeight(broderTree, edges)
   broderBounds = [math.pow(10, -6), 1 / bestWeight]
   # broderBounds = [1, (len(nodes))^3 * 1]
   while (i < maxIterations):
     i += 1
-    newTree = broderConstruction(nodes, edges, phers)
+    newTree = broderConstruction(nodes, edges, phers, ratios)
     if calcWeight(newTree, edges) <= calcWeight(broderTree, edges):
       #update pheremone values
       for rowIndex in range(len(edges)):
@@ -86,14 +120,14 @@ def broderUpdate(maxIterations, nodes, edges, phers):
   return broderTree
 
 # runs iterations of kruskalConstruct and updates pheromone values
-def kruskalUpdate(maxIterations, nodes, edges, phers):
+def kruskalUpdate(maxIterations, nodes, edges, phers, ratios):
   i = 0
-  kruskalTree = kruskalConstruction(nodes, edges, phers)
+  kruskalTree = kruskalConstruction(nodes, edges, phers, ratios)
   bestWeight = calcWeight(kruskalTree, edges)
   kruskalBounds = [math.pow(10, -6), 1 / bestWeight]
   while (i < maxIterations):
     i += 1
-    newTree = kruskalConstruction(nodes, edges, phers)
+    newTree = kruskalConstruction(nodes, edges, phers, ratios)
     # print("new tree made")
     if calcWeight(newTree, edges) <= calcWeight(kruskalTree, edges):
       #update pheremone values
@@ -106,14 +140,14 @@ def kruskalUpdate(maxIterations, nodes, edges, phers):
   return kruskalTree
 
 # runs iterations of primConstruct and updates pheromone values
-def primUpdate(maxIterations, nodes, edges, phers):
+def primUpdate(maxIterations, nodes, edges, phers, ratios):
   i = 0
-  primTree = primConstruction(nodes, edges, phers)
+  primTree = primConstruction(nodes, edges, phers, ratios)
   bestWeight = calcWeight(primTree, edges)
   primBounds = [math.pow(10, -6), 1 / bestWeight] #bounds update with best weight found
   while (i < maxIterations):
     i += 1
-    newTree = primConstruction(nodes, edges, phers)
+    newTree = primConstruction(nodes, edges, phers, ratios)
     if calcWeight(newTree, edges) <= bestWeight:
       # print("better tree found")
       bestWeight = calcWeight(primTree, edges)
@@ -127,8 +161,9 @@ def primUpdate(maxIterations, nodes, edges, phers):
 
 ##delete construction doesn't need update rule, also doesn't use iteration
 
+
 ## CONSTRUCTION GRAPHS
-def broderConstruction(nodes, edges, phers):
+def broderConstruction(nodes, edges, phers, ratios):
 
   #init variables and start node
   tree = []
@@ -146,8 +181,7 @@ def broderConstruction(nodes, edges, phers):
         continue
       eta = 1/edges[curNodeIndex][edgeIndex]
       
-      # print(math.pow(tau, alpha))
-      totalWeight += math.pow(tau, alpha) * math.pow(eta, beta)
+      totalWeight += math.pow(tau, ratios[0]) * math.pow(eta, ratios[1])
 
     #choose neighbor v based on prob value
     num = random.random()
@@ -159,7 +193,7 @@ def broderConstruction(nodes, edges, phers):
       if (edges[curNodeIndex][edgeIndex] == 0):
         continue
       eta = 1/edges[curNodeIndex][edgeIndex]
-      totalProb += (math.pow(tau, alpha) * math.pow(eta, beta))/totalWeight
+      totalProb += (math.pow(tau, ratios[0]) * math.pow(eta, ratios[1]))/totalWeight
 
       if (totalProb > num):
         vIndex = edgeIndex
@@ -173,7 +207,7 @@ def broderConstruction(nodes, edges, phers):
   
   return tree
 
-def kruskalConstruction(nodes, edges, phers):
+def kruskalConstruction(nodes, edges, phers, ratios):
   
   #start without an edge
   curEdge = [-1, -1]
@@ -188,7 +222,7 @@ def kruskalConstruction(nodes, edges, phers):
     for edge in posEdges:
       tau = phers[edge[0]][edge[1]]
       eta = 1/edges[edge[0]][edge[1]]
-      weightSum += (math.pow(tau, alpha)) * (math.pow(eta, beta))
+      weightSum += (math.pow(tau, ratios[0])) * (math.pow(eta, ratios[1]))
 
     num = random.random()
     totalProb = 0
@@ -196,7 +230,7 @@ def kruskalConstruction(nodes, edges, phers):
     for edge in posEdges:
       tau = phers[edge[0]][edge[1]]
       eta = 1/edges[edge[0]][edge[1]]
-      totalProb += (math.pow(tau, alpha) * math.pow(eta, beta)) / weightSum
+      totalProb += (math.pow(tau, ratios[0]) * math.pow(eta, ratios[1])) / weightSum
 
       if (totalProb > num):
         # print('newedge')
@@ -214,7 +248,7 @@ def kruskalConstruction(nodes, edges, phers):
   # print(curTree)
   # print(len(curTree))
   
-def primConstruction(nodes, edges, phers):
+def primConstruction(nodes, edges, phers, ratios):
   seenNodes = [False] * len(nodes)
   seenNodes[random.randrange(len(nodes)-1)] = True
   curTree = []
@@ -229,7 +263,7 @@ def primConstruction(nodes, edges, phers):
             tau = phers[seen][new]
             eta = 1 / math.pow(edges[seen][new], 2)
             posEdges.append([seen, new])
-            weightSum += (math.pow(tau, alpha)) * (math.pow(eta, beta))
+            weightSum += (math.pow(tau, ratios[0])) * (math.pow(eta, ratios[1]))
 
     num = random.random()
     totalProb = 0
@@ -237,7 +271,7 @@ def primConstruction(nodes, edges, phers):
     for edge in posEdges:
       tau = phers[edge[0]][edge[1]]
       eta = 1 / math.pow(edges[edge[0]][edge[1]], 2)
-      totalProb += (math.pow(tau, alpha) * math.pow(eta, beta)) / weightSum
+      totalProb += (math.pow(tau, ratios[0]) * math.pow(eta, ratios[1])) / weightSum
 
       if (totalProb > num):
         # print("added edge")
@@ -391,10 +425,16 @@ def calcWeight(tree, edges):
 
 def main():
 
-  capitals = []
+  ratios = []
+  n = len(sys.argv)
+  if (n == 3):
+    print("Custom run initiated")
+    print("Alpha value: " + sys.argv[1])
+    print("Beta value: " + sys.argv[2])
+    ratios = [int(sys.argv[1]), int(sys.argv[2])]
+
+  nodes = []
   edges = []
-
-
   with open('full-mst-data.csv', mode ='r')as file:
     csvFile = csv.reader(file)
     x = 0
@@ -402,17 +442,16 @@ def main():
       if x == 0:
         x +=1
       else:
-        capitals.append(lines[0])
+        nodes.append(lines[0])
         row = list(map(int, lines[1::]))
         edges.append(row)
-
   phers = [[1] * len(edges)] * len(edges)
+  print("Begin program")
 
-  print("Hello World")
-
-
-  runAnt(100, capitals, edges, phers)
-  print("Optimal: 12148")
+  numIterations = 200
+  runAnt(numIterations, nodes, edges, phers, ratios)
+  print("Optimal: " + str(truePrims(nodes, edges)))
+  print("Number of iterations: " + str(numIterations))
 
 
 if __name__ == "__main__":
