@@ -2,6 +2,15 @@ import math, random
 import csv, sys
 from time import process_time
 
+import matplotlib.pyplot as plt
+import numpy as np
+
+xpoints = np.array([0, 6])
+ypoints = np.array([0, 250])
+
+plt.plot(xpoints, ypoints)
+plt.show()
+
 #code works by assuming graph is coming in as adjacency matrix
 
 curOptimal = 12148
@@ -449,7 +458,7 @@ def main():
   print("Begin program")
 
   numIterations = 200
-  runAnt(numIterations, nodes, edges, phers, ratios)
+  # runAnt(numIterations, nodes, edges, phers, ratios)
   print("Optimal: " + str(truePrims(nodes, edges)))
   print("Number of iterations: " + str(numIterations))
 
