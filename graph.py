@@ -44,10 +44,15 @@ def main():
   primPoints = np.array(vals[2])
   optPoints = np.array([vals[4]] * numIterations)
 
-  plt.plot(xpoints, brodPoints)
-  plt.plot(xpoints, kruskPoints)
-  plt.plot(xpoints, primPoints)
-  plt.plot(xpoints, optPoints)
+  plt.xlabel("Num iterations")
+  plt.ylabel("Total Tree Weight")
+
+  # plt.plot(xpoints, brodPoints, label="broder")
+  plt.plot(xpoints, kruskPoints, label="kruskals")
+  plt.plot(xpoints, primPoints, label="prims")
+  plt.plot(xpoints, optPoints, label="optimal")
+
+  plt.legend(loc="upper right")
   plt.show()
 
 if __name__ == "__main__":

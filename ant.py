@@ -121,7 +121,9 @@ def broderUpdate(maxIterations, nodes, edges, phers, ratios):
     broderOpts.append(bestWeight)
     i += 1
     newTree = broderConstruction(nodes, edges, phers, ratios)
-    if calcWeight(newTree, edges) <= calcWeight(broderTree, edges):
+    newWeight = calcWeight(newTree, edges)
+    if newWeight <= bestWeight:
+      bestWeight = newWeight
       #update pheremone values
       for rowIndex in range(len(edges)):
         for colIndex in range(len(edges[rowIndex])):
@@ -144,8 +146,9 @@ def kruskalUpdate(maxIterations, nodes, edges, phers, ratios):
     kruskalOpts.append(bestWeight)
     i += 1
     newTree = kruskalConstruction(nodes, edges, phers, ratios)
-    # print("new tree made")
-    if calcWeight(newTree, edges) <= calcWeight(kruskalTree, edges):
+    newWeight = calcWeight(newTree, edges)
+    if newWeight <= bestWeight:
+      bestWeight = newWeight
       #update pheremone values
       phers = [[kruskalBounds[0]] * len(edges)] * len(edges)
       for edge in newTree:
@@ -165,9 +168,11 @@ def primUpdate(maxIterations, nodes, edges, phers, ratios):
     primOpts.append(bestWeight)
     i += 1
     newTree = primConstruction(nodes, edges, phers, ratios)
-    if calcWeight(newTree, edges) <= bestWeight:
+    newWeight = calcWeight(newTree, edges)
+    print(newWeight)
+    if newWeight <= bestWeight:
+      bestWeight = newWeight
       # print("better tree found")
-      bestWeight = calcWeight(primTree, edges)
       primBounds = [math.pow(10, -6), 1 / bestWeight]
       phers = [[primBounds[0]] * len(edges)] * len(edges)
       for edge in newTree:
