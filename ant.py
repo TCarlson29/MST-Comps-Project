@@ -2,17 +2,14 @@ import math, random
 import csv, sys
 from time import process_time
 
-# import matplotlib.pyplot as plt
-# import numpy as np
-
-# xpoints = np.array([0, 6])
-# ypoints = np.array([0, 250])
-# plt.plot(xpoints, ypoints)
-# plt.show()
 
 broderOpts = []
 primOpts = []
 kruskalOpts = []
+
+broderTime = []
+primTime = []
+kruskalTime = []
 
 #code works by assuming graph is coming in as adjacency matrix
 
@@ -107,13 +104,16 @@ def runAnt(maxIterations, nodes, edges, phers, ratios):
   # print("Delete # of edges: " + str(len(deleteTree)))
   # print(len(deleteTree))
 
-  return [broderOpts, kruskalOpts, primOpts, deleteWeight, curOptimal]
+  return [[broderOpts, kruskalOpts, primOpts, curOptimal], deleteWeight, [broderTime, kruskalTime, primTime]]
 
 
 # runs iterations of broderConstruct and updates pheromone values
 def broderUpdate(maxIterations, nodes, edges, phers, ratios):
   i = 0
+  start = process_time()
   broderTree = broderConstruction(nodes, edges, phers, ratios)
+  end = process_time()
+  broderTime.append(end - start)
   bestWeight = calcWeight(broderTree, edges)
   broderBounds = [math.pow(10, -6), 1 / bestWeight]
   # broderBounds = [1, (len(nodes))^3 * 1]
@@ -121,32 +121,39 @@ def broderUpdate(maxIterations, nodes, edges, phers, ratios):
     broderOpts.append(bestWeight)
     i += 1
     newTree = broderConstruction(nodes, edges, phers, ratios)
-    if calcWeight(newTree, edges) <= calcWeight(broderTree, edges):
-      #update pheremone values
-      for rowIndex in range(len(edges)):
-        for colIndex in range(len(edges[rowIndex])):
-          if [rowIndex, colIndex] in newTree:
-            phers[rowIndex][colIndex] = broderBounds[1]
-            phers[colIndex][rowIndex] = broderBounds[1]
-          else:
-            phers[rowIndex][colIndex] = broderBounds[0]
-            phers[colIndex][rowIndex] = broderBounds[0]
+    newWeight = calcWeight(newTree, edges)
+    end = process_time()
+    broderTime.append(end - start)
+    if newWeight <= bestWeight:
+      bestWeight = newWeight
+      phers = [[broderBounds[0]] * len(edges)] * len(edges)
+      for edge in newTree:
+        phers[edge[0]][edge[1]] = broderBounds[1]
+        phers[edge[1]][edge[0]] = broderBounds[1]
       broderTree = newTree
   return broderTree
 
 # runs iterations of kruskalConstruct and updates pheromone values
 def kruskalUpdate(maxIterations, nodes, edges, phers, ratios):
   i = 0
+  start = process_time()
   kruskalTree = kruskalConstruction(nodes, edges, phers, ratios)
+  end = process_time()
+  broderTime.append(end - start)
   bestWeight = calcWeight(kruskalTree, edges)
   kruskalBounds = [math.pow(10, -6), 1 / bestWeight]
   while (i < maxIterations):
     kruskalOpts.append(bestWeight)
     i += 1
     newTree = kruskalConstruction(nodes, edges, phers, ratios)
+    newWeight = calcWeight(newTree, edges)
+    end = process_time()
+    kruskalTime.append(end - start)
     # print("new tree made")
-    if calcWeight(newTree, edges) <= calcWeight(kruskalTree, edges):
+    if newWeight <= bestWeight:
       #update pheremone values
+      bestWeight = newWeight
+      kruskalBounds = [math.pow(10, -6), 1 / bestWeight]
       phers = [[kruskalBounds[0]] * len(edges)] * len(edges)
       for edge in newTree:
         phers[edge[0]][edge[1]] = kruskalBounds[1]
@@ -158,16 +165,22 @@ def kruskalUpdate(maxIterations, nodes, edges, phers, ratios):
 # runs iterations of primConstruct and updates pheromone values
 def primUpdate(maxIterations, nodes, edges, phers, ratios):
   i = 0
+  start = process_time()
   primTree = primConstruction(nodes, edges, phers, ratios)
+  end = process_time()
+  broderTime.append(end - start)
   bestWeight = calcWeight(primTree, edges)
   primBounds = [math.pow(10, -6), 1 / bestWeight] #bounds update with best weight found
   while (i < maxIterations):
     primOpts.append(bestWeight)
     i += 1
     newTree = primConstruction(nodes, edges, phers, ratios)
-    if calcWeight(newTree, edges) <= bestWeight:
+    newWeight = calcWeight(newTree, edges)
+    end = process_time()
+    primTime.append(end - start)
+    if newWeight <= bestWeight:
       # print("better tree found")
-      bestWeight = calcWeight(primTree, edges)
+      bestWeight = newWeight
       primBounds = [math.pow(10, -6), 1 / bestWeight]
       phers = [[primBounds[0]] * len(edges)] * len(edges)
       for edge in newTree:
