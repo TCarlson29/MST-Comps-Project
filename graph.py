@@ -14,12 +14,13 @@ import numpy as np
 #Future additions: alpha/beta ratios vs optimality
 
 
+#returns the highest end-value list (used for graphing with variable data lengths)
 def maxlen(arg1, arg2, arg3):
-  if len(arg1) >= len(arg2):
-    if len(arg1) >= len(arg3):
+  if arg1[-1] >= arg2[-1]:
+    if arg1[-1] >= arg3[-1]:
       return arg1
     return arg3
-  if len(arg2) >= len(arg3):
+  if arg2[-1] >= arg3[-1]:
     return arg2
   return arg3
 
@@ -47,6 +48,7 @@ def main():
         edges.append(row)
   phers = [[1] * len(edges)] * len(edges)
   print("Begin program")
+
 
   if (sys.argv[1] == "Opt/It"):
     numIterations = 200
@@ -96,29 +98,29 @@ def main():
     plt.show()
 
 
-  numIterations = 200
-  vals = ant.runAnt(numIterations, nodes, edges, phers, ratios)
-  print("Optimal: " + str(ant.truePrims(nodes, edges)))
-  print("Number of iterations: " + str(numIterations))
+  # numIterations = 200
+  # vals = ant.runAnt(numIterations, nodes, edges, phers, ratios)
+  # print("Optimal: " + str(ant.truePrims(nodes, edges)))
+  # print("Number of iterations: " + str(numIterations))
 
-  #vals = [broderOpts, kruskalOpts, primOpts, deleteWeight, curOptimal]
-  #GRAPHING
-  xpoints = np.array(list(range(numIterations)))
-  brodPoints = np.array(vals[0])
-  kruskPoints = np.array(vals[1])
-  primPoints = np.array(vals[2])
-  optPoints = np.array([vals[4]] * numIterations)
+  # #vals = [broderOpts, kruskalOpts, primOpts, deleteWeight, curOptimal]
+  # #GRAPHING
+  # xpoints = np.array(list(range(numIterations)))
+  # brodPoints = np.array(vals[0])
+  # kruskPoints = np.array(vals[1])
+  # primPoints = np.array(vals[2])
+  # optPoints = np.array([vals[4]] * numIterations)
 
-  plt.xlabel("Num iterations")
-  plt.ylabel("Total Tree Weight")
+  # plt.xlabel("Num iterations")
+  # plt.ylabel("Total Tree Weight")
 
-  # plt.plot(xpoints, brodPoints, label="broder")
-  plt.plot(xpoints, kruskPoints, label="kruskals")
-  plt.plot(xpoints, primPoints, label="prims")
-  plt.plot(xpoints, optPoints, label="optimal")
+  # # plt.plot(xpoints, brodPoints, label="broder")
+  # plt.plot(xpoints, kruskPoints, label="kruskals")
+  # plt.plot(xpoints, primPoints, label="prims")
+  # plt.plot(xpoints, optPoints, label="optimal")
 
-  plt.legend(loc="upper right")
-  plt.show()
+  # plt.legend(loc="upper right")
+  # plt.show()
 
 if __name__ == "__main__":
   main()
