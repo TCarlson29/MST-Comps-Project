@@ -32,7 +32,7 @@ def filter_brain_parts(file_path, universal_brain_parts):
 
     with open(file_path, mode='r', newline='', encoding='utf-8') as csv_file:
         reader = csv.reader(csv_file)
-        header = next(reader)
+        header = next(reader) # reads the first line
 
         # filters out the columns with universally common names
         columns_to_keep = []
@@ -64,18 +64,22 @@ if csv_files:
         current_column = read_first_column(file)
         universal_brain_parts.intersection_update(current_column) # removes the uncommon parts of the brain - intersection_update returns the values present in both sets
 
-    for item in universal_brain_parts:
-        print(item)
+    # prints universal brain parts
+    # for item in universal_brain_parts:
+    #     print(item)
 
     for file in csv_files:
-        filtered_data = filter_brain_parts(file, universal_brain_parts)
+        filtered_data = filter_brain_parts(file, universal_brain_parts) # filters each file for common parts
 
-        output_file = f"filtered_{file}"
+        output_file = f"filtered_{file}" # allows the name change of csv file to be filtered
+
+        # creates new csv file with filtered data
         with open (output_file, mode='w', newline='', encoding='utf-8') as output_csv:
             writer = csv.writer(output_csv)
             writer.writerows(filtered_data)
         
-        print(f"Filtered matrix saved as {output_file}")
+        # prints if successful csv file creation
+        # print(f"Filtered matrix saved as {output_file}")
 else:
     print("No .csv files found")
 
