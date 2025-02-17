@@ -9,7 +9,7 @@
 import csv
 
 csv_files = [
-            '"C:\Users\tjcar\Downloads\Patient1_connectivity_matrix.csv"', '"C:\Users\tjcar\Downloads\Patient2_connectivity_matrix.csv"'
+            'Patient1_connectivity_matrix.csv', 'Patient2_connectivity_matrix.csv'
             ]
 
 # another way of doing whats above
@@ -27,6 +27,36 @@ def read_first_column(file_path):
 
     return brain_part_set
 
+def filter_brain_parts(file_path, universal_brain_parts):
+    filtered_data = []
+
+    with open(file_path, mode='r', newline='', encoding='utf-8') as csv_file:
+        reader = csv.reader(csv_file)
+        header = next(reader)
+
+        # filters out the columns with universally common names
+        columns_to_keep = []
+        for i in range(len(header)):
+            if header[i] in universal_brain_parts:
+                columns_to_keep.append(i)
+        
+        # adds the header / first row
+        filtered_first_row = []
+        for i in columns_to_keep:
+            filtered_first_row.append(header[i])
+        filtered_data.append(filtered_first_row)
+        
+        # adds the rest of the rows
+        for row in reader:
+            if row[0] in universal_brain_parts:
+                filtered_row = []
+                for i in columns_to_keep:
+                    filtered_row.append(row[i])
+                filtered_data.append(filtered_row)
+        
+        return filtered_data
+                
+
 if csv_files:
     universal_brain_parts = read_first_column(csv_files[0]) # gets the first column of the first csv file
 
@@ -36,6 +66,16 @@ if csv_files:
 
     for item in universal_brain_parts:
         print(item)
+
+    for file in csv_files:
+        filtered_data = filter_brain_parts(file, universal_brain_parts)
+
+        output_file = f"filtered_{file}"
+        with open (output_file, mode='w', newline='', encoding='utf-8') as output_csv:
+            writer = csv.writer(output_csv)
+            writer.writerows(filtered_data)
+        
+        print(f"Filtered matrix saved as {output_file}")
 else:
     print("No .csv files found")
 
