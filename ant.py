@@ -17,6 +17,8 @@ kruskalTime = []
 maxTime = 30
 maxIterations = 200
 
+isTimed = False
+
 #actual running of prims to test optimality
 def truePrims(nodes, edges):
   seenNodes = [False] * len(nodes)
@@ -46,6 +48,9 @@ def truePrims(nodes, edges):
   # print(len(tree))
   return calcWeight(tree, edges)
 
+def runAntTimed(nodes, edges, phers, ratios):
+  isTimed = True
+  return runAnt(nodes, edges, phers, ratios)
 
 #needs to be able to update graph weights 
 def runAnt(nodes, edges, phers, ratios):
@@ -115,20 +120,18 @@ def broderUpdate(maxIterations, nodes, edges, phers, ratios):
   start = process_time()
   broderTree = broderConstruction(nodes, edges, phers, ratios)
   end = process_time()
-  # broderTime.append(end - start)
   bestWeight = calcWeight(broderTree, edges)
   broderBounds = [math.pow(10, -6), 1 / bestWeight]
   # broderBounds = [1, (len(nodes))^3 * 1]
   while (i < maxIterations):
     i += 1
     broderTime.append(end - start)
-    # if broderTime[-1] > maxTime:
-    #   break
     broderOpts.append(bestWeight)
+    if (isTimed and broderTime[-1] > maxTime):
+      break
     newTree = broderConstruction(nodes, edges, phers, ratios)
     end = process_time()
     newWeight = calcWeight(newTree, edges)
-    # broderTime.append(end - start)
     if newWeight <= bestWeight:
       bestWeight = newWeight
       phers = [[broderBounds[0]] * len(edges)] * len(edges)
@@ -150,6 +153,8 @@ def kruskalUpdate(maxIterations, nodes, edges, phers, ratios):
   while (i < maxIterations):
     kruskalOpts.append(bestWeight)
     kruskalTime.append(end - start)
+    if (isTimed and kruskalTime[-1] > maxTime):
+      break
     i += 1
     newTree = kruskalConstruction(nodes, edges, phers, ratios)
     end = process_time()
@@ -179,6 +184,8 @@ def primUpdate(maxIterations, nodes, edges, phers, ratios):
   while (i < maxIterations):
     primOpts.append(bestWeight)
     primTime.append(end - start)
+    if (isTimed and primTime[-1] > maxTime):
+      break
     i += 1
     newTree = primConstruction(nodes, edges, phers, ratios)
     end = process_time()

@@ -52,10 +52,12 @@ def main():
 
 
   if (sys.argv[1] == "Opt/It"):
+    numIterations = 200
     
     vals = ant.runAnt(nodes, edges, phers, ratios)
     print("Optimal: " + str(ant.truePrims(nodes, edges)))
     print("Number of iterations: " + str(numIterations))
+
       #GRAPHING OPT/ITs
     xpoints = np.array(list(range(numIterations)))
     brodPoints = np.array(vals[0])
@@ -89,14 +91,11 @@ def main():
     plt.plot(xpoints, optPoints)
     plt.show()
   
-
-  ## TODO
-  ## NEEDS TESTING
   elif (sys.argv[1] == "Opt/Time"):
-    numIterations = 200
-    vals = ant.runAnt(nodes, edges, phers, ratios)
+    amtTime = 200
+    vals = ant.runAntTimed(nodes, edges, phers, ratios)
     print("Optimal: " + str(ant.truePrims(nodes, edges)))
-    print("Number of iterations: " + str(numIterations))
+    print("Amount of processor time: " + str(amtTime))
 
     #vals = [[broderOpts, kruskalOpts, primOpts, curOptimal], deleteWeight, [broderTime, kruskalTime, primTime]]
 
@@ -107,12 +106,12 @@ def main():
     kruskPoints = np.array(vals[0][1])
     XprimTime = np.array(vals[2][2])
     primPoints = np.array(vals[0][2])
-    optPoints = np.array([vals[0][3]] * numIterations)
+    optPoints = np.array([vals[0][3]] * amtTime)
 
     plt.xlabel("Processor Time (s)")
     plt.ylabel("Total Tree Weight")
 
-    # plt.plot(XbrodTime, brodPoints, label="broders")
+    plt.plot(XbrodTime, brodPoints, label="broders")
     plt.plot(XkruskTime, kruskPoints, label="kruskals")
     plt.plot(XprimTime, primPoints, label="prims")
     plt.plot(maxlen(XbrodTime, XkruskTime, XprimTime), optPoints, label="Optimal")
@@ -121,29 +120,42 @@ def main():
     plt.show()
 
 
-  # numIterations = 200
-  # vals = ant.runAnt(numIterations, nodes, edges, phers, ratios)
-  # print("Optimal: " + str(ant.truePrims(nodes, edges)))
-  # print("Number of iterations: " + str(numIterations))
+  #TODO
+  # Change data lists to be algorithm-specific
+  elif (sys.argv[1] == "Opt/AB"):
 
-  # #vals = [broderOpts, kruskalOpts, primOpts, deleteWeight, curOptimal]
-  # #GRAPHING
-  # xpoints = np.array(list(range(numIterations)))
-  # brodPoints = np.array(vals[0])
-  # kruskPoints = np.array(vals[1])
-  # primPoints = np.array(vals[2])
-  # optPoints = np.array([vals[4]] * numIterations)
+    ratios = [0, 1]
+    data1 = ant.runAnt(nodes, edges, phers, ratios)
+    ratios = [1, 5]
+    data2 = ant.runAnt(nodes, edges, phers, ratios)
+    ratios = [1, 2]
+    data3 = ant.runAnt(nodes, edges, phers, ratios)
+    ratios = [1, 1]
+    data4 = ant.runAnt(nodes, edges, phers, ratios)
+    ratios = [2, 1]
+    data5 = ant.runAnt(nodes, edges, phers, ratios)
+    ratios = [5, 1]
+    data6 = ant.runAnt(nodes, edges, phers, ratios)
+    ratios = [1, 0]
+    data7 = ant.runAnt(nodes, edges, phers, ratios)
+    data = [data1, data2, data3, data4, data5, data6, data7]
+    print("Optimal: " + str(ant.truePrims(nodes, edges)))
+    # print("Amount of processor time: " + str(amtTime))
 
-  # plt.xlabel("Num iterations")
-  # plt.ylabel("Total Tree Weight")
+    #vals = [[broderOpts, kruskalOpts, primOpts, curOptimal], deleteWeight, [broderTime, kruskalTime, primTime]]
 
-  # plt.plot(xpoints, brodPoints, label="broder")
-  # plt.plot(xpoints, kruskPoints, label="kruskals")
-  # plt.plot(xpoints, primPoints, label="prims")
-  # plt.plot(xpoints, optPoints, label="optimal")
+    plt.xlabel("Alpha/Beta Weights (s)")
+    plt.ylabel("Total Tree Weight")
 
-  # plt.legend(loc="upper right")
-  # plt.show()
+    fig = plt.figure(figsize =(10, 7))
+    ax = fig.add_axes([0, 0, 1, 1]) #Don't know what this does
+    bp = ax.boxplot(data)
+
+    plt.legend(loc="upper right")
+    plt.show()
+
+  else:
+    print("Invalid experimental type. Try again")
 
 if __name__ == "__main__":
   main()
