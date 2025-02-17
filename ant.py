@@ -14,6 +14,8 @@ kruskalTime = []
 #code works by assuming graph is coming in as adjacency matrix
 
 # curOptimal = 12148
+maxTime = 30
+maxIterations = 200
 
 #actual running of prims to test optimality
 def truePrims(nodes, edges):
@@ -46,7 +48,7 @@ def truePrims(nodes, edges):
 
 
 #needs to be able to update graph weights 
-def runAnt(maxIterations, nodes, edges, phers, ratios):
+def runAnt(nodes, edges, phers, ratios):
   curOptimal = truePrims(nodes, edges)
 
   #RATIOS ARE REPRESENTATIONS OF PHER/EDGE WEIGHTING FOR ACO's
@@ -61,19 +63,19 @@ def runAnt(maxIterations, nodes, edges, phers, ratios):
     primRatios = ratios
   
   brodStart = process_time()
-  broderTree = broderUpdate(maxIterations, nodes, edges, phers, broderRatios)
+  broderTree = broderUpdate(nodes, edges, phers, broderRatios)
   brodEnd = process_time()
   print("broderDone")
   print("brod total time elapsed: " + str(brodEnd - brodStart))
 
   kruskStart = process_time()
-  kruskalTree = kruskalUpdate(maxIterations, nodes, edges, phers, kruskRatios)
+  kruskalTree = kruskalUpdate(nodes, edges, phers, kruskRatios)
   kruskEnd = process_time()
   print("KruskalDone")
   print("krusk total time elapsed: " + str(kruskEnd - kruskStart))
 
   primStart = process_time()
-  primTree = primUpdate(maxIterations, nodes, edges, phers, primRatios)
+  primTree = primUpdate(nodes, edges, phers, primRatios)
   primEnd = process_time()
   print("prim Done")
   print("prim total time elapsed: " + str(primEnd - primStart))
@@ -113,17 +115,20 @@ def broderUpdate(maxIterations, nodes, edges, phers, ratios):
   start = process_time()
   broderTree = broderConstruction(nodes, edges, phers, ratios)
   end = process_time()
-  broderTime.append(end - start)
+  # broderTime.append(end - start)
   bestWeight = calcWeight(broderTree, edges)
   broderBounds = [math.pow(10, -6), 1 / bestWeight]
   # broderBounds = [1, (len(nodes))^3 * 1]
   while (i < maxIterations):
-    broderOpts.append(bestWeight)
     i += 1
-    newTree = broderConstruction(nodes, edges, phers, ratios)
-    newWeight = calcWeight(newTree, edges)
-    end = process_time()
     broderTime.append(end - start)
+    # if broderTime[-1] > maxTime:
+    #   break
+    broderOpts.append(bestWeight)
+    newTree = broderConstruction(nodes, edges, phers, ratios)
+    end = process_time()
+    newWeight = calcWeight(newTree, edges)
+    # broderTime.append(end - start)
     if newWeight <= bestWeight:
       bestWeight = newWeight
       phers = [[broderBounds[0]] * len(edges)] * len(edges)
@@ -139,16 +144,16 @@ def kruskalUpdate(maxIterations, nodes, edges, phers, ratios):
   start = process_time()
   kruskalTree = kruskalConstruction(nodes, edges, phers, ratios)
   end = process_time()
-  broderTime.append(end - start)
+  # kruskalTime.append(end - start)
   bestWeight = calcWeight(kruskalTree, edges)
   kruskalBounds = [math.pow(10, -6), 1 / bestWeight]
   while (i < maxIterations):
     kruskalOpts.append(bestWeight)
+    kruskalTime.append(end - start)
     i += 1
     newTree = kruskalConstruction(nodes, edges, phers, ratios)
-    newWeight = calcWeight(newTree, edges)
     end = process_time()
-    kruskalTime.append(end - start)
+    newWeight = calcWeight(newTree, edges)
     # print("new tree made")
     if newWeight <= bestWeight:
       #update pheremone values
@@ -168,16 +173,16 @@ def primUpdate(maxIterations, nodes, edges, phers, ratios):
   start = process_time()
   primTree = primConstruction(nodes, edges, phers, ratios)
   end = process_time()
-  broderTime.append(end - start)
+  # primTime.append(end - start)
   bestWeight = calcWeight(primTree, edges)
   primBounds = [math.pow(10, -6), 1 / bestWeight] #bounds update with best weight found
   while (i < maxIterations):
     primOpts.append(bestWeight)
+    primTime.append(end - start)
     i += 1
     newTree = primConstruction(nodes, edges, phers, ratios)
-    newWeight = calcWeight(newTree, edges)
     end = process_time()
-    primTime.append(end - start)
+    newWeight = calcWeight(newTree, edges)
     if newWeight <= bestWeight:
       # print("better tree found")
       bestWeight = newWeight

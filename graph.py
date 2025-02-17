@@ -10,6 +10,7 @@ import numpy as np
 ##NOTE: PROGRAM needs one argument for which experiment to run. Options:
 ##    - "Opt/It": Optimality over iterations
 ##    - "Opt/Time": Optimality over time (processing time?)
+##        - change x axis so they all have same amount of time not same number of iterations
 
 #Future additions: alpha/beta ratios vs optimality
 
@@ -51,8 +52,8 @@ def main():
 
 
   if (sys.argv[1] == "Opt/It"):
-    numIterations = 200
-    vals = ant.runAnt(numIterations, nodes, edges, phers, ratios)
+    
+    vals = ant.runAnt(nodes, edges, phers, ratios)
     print("Optimal: " + str(ant.truePrims(nodes, edges)))
     print("Number of iterations: " + str(numIterations))
       #GRAPHING OPT/ITs
@@ -93,7 +94,7 @@ def main():
   ## NEEDS TESTING
   elif (sys.argv[1] == "Opt/Time"):
     numIterations = 200
-    vals = ant.runAnt(numIterations, nodes, edges, phers, ratios)
+    vals = ant.runAnt(nodes, edges, phers, ratios)
     print("Optimal: " + str(ant.truePrims(nodes, edges)))
     print("Number of iterations: " + str(numIterations))
 
@@ -111,10 +112,12 @@ def main():
     plt.xlabel("Processor Time (s)")
     plt.ylabel("Total Tree Weight")
 
-    plt.plot(XbrodTime, brodPoints, label="broders")
+    # plt.plot(XbrodTime, brodPoints, label="broders")
     plt.plot(XkruskTime, kruskPoints, label="kruskals")
     plt.plot(XprimTime, primPoints, label="prims")
-    plt.plot(maxlen(XbrodTime, XkruskTime, XprimTime), optPoints)
+    plt.plot(maxlen(XbrodTime, XkruskTime, XprimTime), optPoints, label="Optimal")
+
+    plt.legend(loc="upper right")
     plt.show()
 
 
