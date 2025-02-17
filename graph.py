@@ -18,7 +18,7 @@ import numpy as np
 def maxlen(arg1, arg2, arg3):
   if arg1[-1] >= arg2[-1]:
     if arg1[-1] >= arg3[-1]:
-      return arg1
+      return arg1  
     return arg3
   if arg2[-1] >= arg3[-1]:
     return arg2
@@ -55,6 +55,23 @@ def main():
     vals = ant.runAnt(numIterations, nodes, edges, phers, ratios)
     print("Optimal: " + str(ant.truePrims(nodes, edges)))
     print("Number of iterations: " + str(numIterations))
+      #GRAPHING OPT/ITs
+    xpoints = np.array(list(range(numIterations)))
+    brodPoints = np.array(vals[0])
+    kruskPoints = np.array(vals[1])
+    primPoints = np.array(vals[2])
+    optPoints = np.array([vals[4]] * numIterations)
+
+    plt.xlabel("Num iterations")
+    plt.ylabel("Total Tree Weight")
+
+    plt.plot(xpoints, brodPoints, label="broder")
+    plt.plot(xpoints, kruskPoints, label="kruskals")
+    plt.plot(xpoints, primPoints, label="prims")
+    plt.plot(xpoints, optPoints, label="optimal")
+
+    plt.legend(loc="upper right")
+    plt.show()
 
     #vals = [[broderOpts, kruskalOpts, primOpts, curOptimal], deleteWeight, [broderTime, primTime, kruskalTime]]
 
@@ -82,7 +99,7 @@ def main():
 
     #vals = [[broderOpts, kruskalOpts, primOpts, curOptimal], deleteWeight, [broderTime, kruskalTime, primTime]]
 
-    #GRAPHING
+    #GRAPHING OPT/TIME
     XbrodTime = np.array(vals[2][0])
     brodPoints = np.array(vals[0][0])
     XkruskTime = np.array(vals[2][1])
@@ -91,9 +108,12 @@ def main():
     primPoints = np.array(vals[0][2])
     optPoints = np.array([vals[0][3]] * numIterations)
 
-    plt.plot(XbrodTime, brodPoints)
-    plt.plot(XkruskTime, kruskPoints)
-    plt.plot(XprimTime, primPoints)
+    plt.xlabel("Processor Time (s)")
+    plt.ylabel("Total Tree Weight")
+
+    plt.plot(XbrodTime, brodPoints, label="broders")
+    plt.plot(XkruskTime, kruskPoints, label="kruskals")
+    plt.plot(XprimTime, primPoints, label="prims")
     plt.plot(maxlen(XbrodTime, XkruskTime, XprimTime), optPoints)
     plt.show()
 
@@ -114,7 +134,7 @@ def main():
   # plt.xlabel("Num iterations")
   # plt.ylabel("Total Tree Weight")
 
-  # # plt.plot(xpoints, brodPoints, label="broder")
+  # plt.plot(xpoints, brodPoints, label="broder")
   # plt.plot(xpoints, kruskPoints, label="kruskals")
   # plt.plot(xpoints, primPoints, label="prims")
   # plt.plot(xpoints, optPoints, label="optimal")
