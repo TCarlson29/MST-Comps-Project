@@ -92,8 +92,8 @@ def main():
     plt.show()
   
   elif (sys.argv[1] == "Opt/Time"):
-    amtTime = 200
-    vals = ant.runAntTimed(nodes, edges, phers, ratios)
+    amtTime = 30
+    vals = ant.runAnt(nodes, edges, phers, ratios, True)
     print("Optimal: " + str(ant.truePrims(nodes, edges)))
     print("Amount of processor time: " + str(amtTime))
 
@@ -101,6 +101,8 @@ def main():
 
     #GRAPHING OPT/TIME
     XbrodTime = np.array(vals[2][0])
+    print(XbrodTime)
+    print(len(XbrodTime))
     brodPoints = np.array(vals[0][0])
     XkruskTime = np.array(vals[2][1])
     kruskPoints = np.array(vals[0][1])
@@ -114,7 +116,7 @@ def main():
     plt.plot(XbrodTime, brodPoints, label="broders")
     plt.plot(XkruskTime, kruskPoints, label="kruskals")
     plt.plot(XprimTime, primPoints, label="prims")
-    plt.plot(maxlen(XbrodTime, XkruskTime, XprimTime), optPoints, label="Optimal")
+    plt.plot(range(0, 30), optPoints, label="Optimal")
 
     plt.legend(loc="upper right")
     plt.show()
@@ -123,6 +125,23 @@ def main():
   #TODO
   # Change data lists to be algorithm-specific
   elif (sys.argv[1] == "Opt/AB"):
+
+    # data_1 = np.random.normal(100, 10, 200)
+    # data_2 = np.random.normal(90, 20, 200)
+    # data_3 = np.random.normal(80, 30, 200)
+    # data_4 = np.random.normal(70, 40, 200)
+    # data = [data_1, data_2, data_3, data_4]
+
+    # fig = plt.figure(figsize =(10, 7))
+
+    # # Creating axes instance
+    # ax = fig.add_axes([0, 0, 1, 1])
+
+    # # Creating plot
+    # bp = ax.boxplot(data)
+
+    # # show plot
+    # plt.show()
 
     ratios = [0, 1]
     data1 = ant.runAnt(nodes, edges, phers, ratios)
@@ -140,7 +159,7 @@ def main():
     data7 = ant.runAnt(nodes, edges, phers, ratios)
     data = [data1, data2, data3, data4, data5, data6, data7]
     print("Optimal: " + str(ant.truePrims(nodes, edges)))
-    # print("Amount of processor time: " + str(amtTime))
+    print("Amount of processor time: " + str(amtTime))
 
     #vals = [[broderOpts, kruskalOpts, primOpts, curOptimal], deleteWeight, [broderTime, kruskalTime, primTime]]
 

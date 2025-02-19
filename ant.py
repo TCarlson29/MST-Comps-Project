@@ -17,8 +17,6 @@ kruskalTime = []
 maxTime = 30
 maxIterations = 200
 
-isTimed = False
-
 #actual running of prims to test optimality
 def truePrims(nodes, edges):
   seenNodes = [False] * len(nodes)
@@ -48,13 +46,15 @@ def truePrims(nodes, edges):
   # print(len(tree))
   return calcWeight(tree, edges)
 
-def runAntTimed(nodes, edges, phers, ratios):
-  isTimed = True
-  return runAnt(nodes, edges, phers, ratios)
+# def runAntTimed(nodes, edges, phers, ratios):
+#   isTimed = True
+#   maxIterations = 10000000000000
+#   return runAnt(nodes, edges, phers, ratios)
 
 #needs to be able to update graph weights 
-def runAnt(nodes, edges, phers, ratios):
+def runAnt(nodes, edges, phers, ratios, isTimed):
   curOptimal = truePrims(nodes, edges)
+  print("runAnt begun")
 
   #RATIOS ARE REPRESENTATIONS OF PHER/EDGE WEIGHTING FOR ACO's
   # first value = pher weight
@@ -68,19 +68,20 @@ def runAnt(nodes, edges, phers, ratios):
     primRatios = ratios
   
   brodStart = process_time()
-  broderTree = broderUpdate(nodes, edges, phers, broderRatios)
+  broderTree = broderUpdate(nodes, edges, phers, broderRatios, isTimed)
+  # broderTree = []
   brodEnd = process_time()
   print("broderDone")
   print("brod total time elapsed: " + str(brodEnd - brodStart))
 
   kruskStart = process_time()
-  kruskalTree = kruskalUpdate(nodes, edges, phers, kruskRatios)
+  kruskalTree = kruskalUpdate(nodes, edges, phers, kruskRatios, isTimed)
   kruskEnd = process_time()
   print("KruskalDone")
   print("krusk total time elapsed: " + str(kruskEnd - kruskStart))
 
   primStart = process_time()
-  primTree = primUpdate(nodes, edges, phers, primRatios)
+  primTree = primUpdate(nodes, edges, phers, primRatios, isTimed)
   primEnd = process_time()
   print("prim Done")
   print("prim total time elapsed: " + str(primEnd - primStart))
@@ -115,21 +116,27 @@ def runAnt(nodes, edges, phers, ratios):
 
 
 # runs iterations of broderConstruct and updates pheromone values
-def broderUpdate(maxIterations, nodes, edges, phers, ratios):
+def broderUpdate(nodes, edges, phers, ratios, isTimed):
   i = 0
   start = process_time()
+  broderBounds = [1, pow(len(nodes), 3) * 1]
   broderTree = broderConstruction(nodes, edges, phers, ratios)
   end = process_time()
   bestWeight = calcWeight(broderTree, edges)
-  broderBounds = [math.pow(10, -6), 1 / bestWeight]
+  broderTime.append(end - start)
+  broderOpts.append(bestWeight)
+  # print("POWER TEST: " + str(pow(3, 2)))
   # broderBounds = [1, (len(nodes))^3 * 1]
+
   while (i < maxIterations):
-    i += 1
-    broderTime.append(end - start)
-    broderOpts.append(bestWeight)
-    if (isTimed and broderTime[-1] > maxTime):
+    # print(isTimed)
+    if (isTimed and ((end-start) > maxTime)): 
+      broderTime.append(end - start)
+      broderOpts.append(bestWeight)
       break
+    if not isTimed: i += 1
     newTree = broderConstruction(nodes, edges, phers, ratios)
+    # print("broder new tree")
     end = process_time()
     newWeight = calcWeight(newTree, edges)
     if newWeight <= bestWeight:
@@ -139,23 +146,27 @@ def broderUpdate(maxIterations, nodes, edges, phers, ratios):
         phers[edge[0]][edge[1]] = broderBounds[1]
         phers[edge[1]][edge[0]] = broderBounds[1]
       broderTree = newTree
+      broderTime.append(end - start)
+      broderOpts.append(bestWeight)
   return broderTree
 
 # runs iterations of kruskalConstruct and updates pheromone values
-def kruskalUpdate(maxIterations, nodes, edges, phers, ratios):
+def kruskalUpdate(nodes, edges, phers, ratios, isTimed):
   i = 0
   start = process_time()
   kruskalTree = kruskalConstruction(nodes, edges, phers, ratios)
   end = process_time()
   # kruskalTime.append(end - start)
   bestWeight = calcWeight(kruskalTree, edges)
+  kruskalOpts.append(bestWeight)
+  kruskalTime.append(end - start)
   kruskalBounds = [math.pow(10, -6), 1 / bestWeight]
   while (i < maxIterations):
-    kruskalOpts.append(bestWeight)
-    kruskalTime.append(end - start)
-    if (isTimed and kruskalTime[-1] > maxTime):
+    if (isTimed and (end-start) > maxTime): 
+      kruskalOpts.append(bestWeight)
+      kruskalTime.append(end - start)
       break
-    i += 1
+    if not isTimed: i += 1
     newTree = kruskalConstruction(nodes, edges, phers, ratios)
     end = process_time()
     newWeight = calcWeight(newTree, edges)
@@ -169,11 +180,13 @@ def kruskalUpdate(maxIterations, nodes, edges, phers, ratios):
         phers[edge[0]][edge[1]] = kruskalBounds[1]
         phers[edge[1]][edge[0]] = kruskalBounds[1]
       kruskalTree = newTree
+      kruskalOpts.append(bestWeight)
+      kruskalTime.append(end - start)
       # print("better tree found")
   return kruskalTree
 
 # runs iterations of primConstruct and updates pheromone values
-def primUpdate(maxIterations, nodes, edges, phers, ratios):
+def primUpdate(nodes, edges, phers, ratios, isTimed):
   i = 0
   start = process_time()
   primTree = primConstruction(nodes, edges, phers, ratios)
@@ -182,11 +195,11 @@ def primUpdate(maxIterations, nodes, edges, phers, ratios):
   bestWeight = calcWeight(primTree, edges)
   primBounds = [math.pow(10, -6), 1 / bestWeight] #bounds update with best weight found
   while (i < maxIterations):
-    primOpts.append(bestWeight)
-    primTime.append(end - start)
-    if (isTimed and primTime[-1] > maxTime):
+    if (isTimed and (end-start) > maxTime): 
+      primOpts.append(bestWeight)
+      primTime.append(end - start)
       break
-    i += 1
+    if not isTimed: i += 1
     newTree = primConstruction(nodes, edges, phers, ratios)
     end = process_time()
     newWeight = calcWeight(newTree, edges)
@@ -198,6 +211,8 @@ def primUpdate(maxIterations, nodes, edges, phers, ratios):
       for edge in newTree:
         phers[edge[0]][edge[1]] = primBounds[1]
         phers[edge[1]][edge[0]] = primBounds[1]
+      primOpts.append(bestWeight)
+      primTime.append(end - start)
 
   return primTree
 
@@ -218,9 +233,9 @@ def broderConstruction(nodes, edges, phers, ratios):
 
     #get all edges that connect to curNode
     for edgeIndex in range(len(edges[curNodeIndex])):
-      tau = phers[curNodeIndex][edgeIndex]
       if (edges[curNodeIndex][edgeIndex] == 0):
         continue
+      tau = phers[curNodeIndex][edgeIndex]
       eta = 1/edges[curNodeIndex][edgeIndex]
       
       totalWeight += math.pow(tau, ratios[0]) * math.pow(eta, ratios[1])
@@ -231,9 +246,9 @@ def broderConstruction(nodes, edges, phers, ratios):
     vIndex = 0
     #calculate which neighbor to go to
     for edgeIndex in range(len(edges[curNodeIndex])):
-      tau = phers[curNodeIndex][edgeIndex]
       if (edges[curNodeIndex][edgeIndex] == 0):
         continue
+      tau = phers[curNodeIndex][edgeIndex]
       eta = 1/edges[curNodeIndex][edgeIndex]
       totalProb += (math.pow(tau, ratios[0]) * math.pow(eta, ratios[1]))/totalWeight
 
@@ -243,8 +258,10 @@ def broderConstruction(nodes, edges, phers, ratios):
     
     #add neighbor to tree if not visited, change curNode to neighbor
     if nodesVisited[vIndex] == False:
+      # print("neighbor added: " + str(vIndex))
       tree.append([curNodeIndex, vIndex])
       nodesVisited[vIndex] = True
+      # print(nodesVisited)
     curNodeIndex = vIndex
   
   return tree
