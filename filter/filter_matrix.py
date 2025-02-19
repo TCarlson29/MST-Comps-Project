@@ -9,7 +9,16 @@
 import csv
 
 csv_files = [
-            'Patient1_connectivity_matrix.csv', 'Patient2_connectivity_matrix.csv'
+            'Patient1_connectivity_matrix.csv', 'Patient2_connectivity_matrix.csv', 'Patient3_connectivity_matrix.csv', 
+            'Patient4_connectivity_matrix.csv', 'Patient5_connectivity_matrix.csv', 'Patient6_connectivity_matrix.csv', 
+            'Patient7_connectivity_matrix.csv', 'Patient8_connectivity_matrix.csv', 'Patient9_connectivity_matrix.csv', 
+            'Patient10_connectivity_matrix.csv', 'Patient11_connectivity_matrix.csv', 'Patient12_connectivity_matrix.csv', 
+            'Patient13_connectivity_matrix.csv', 'Patient14_connectivity_matrix.csv', 'Patient15_connectivity_matrix.csv', 
+            'Patient16_connectivity_matrix.csv', 'Patient17_connectivity_matrix.csv', 'Patient18_connectivity_matrix.csv', 
+            'Patient19_connectivity_matrix.csv', 'Patient20_connectivity_matrix.csv', 'Patient21_connectivity_matrix.csv', 
+            'Patient22_connectivity_matrix.csv', 'Patient23_connectivity_matrix.csv', 'Patient24_connectivity_matrix.csv', 
+            'Patient25_connectivity_matrix.csv', 'Patient26_connectivity_matrix.csv', 'Patient27_connectivity_matrix.csv', 
+            'Patient28_connectivity_matrix.csv', 'Patient29_connectivity_matrix.csv', 
             ]
 
 # another way of doing whats above
