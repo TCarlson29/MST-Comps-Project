@@ -112,13 +112,13 @@ if NL_csv_files:
     left_regions = read_first_column_l(NL_csv_files[0]) # gets the first column of the first filtered csv file with left regions
     right_regions = read_first_column_r(NL_csv_files[0]) # gets the first column of the first filtered csv file with right regions
 
-    # prints left regions
-    for item in left_regions:
-        print(item)
+    # # prints left regions
+    # for item in left_regions:
+    #     print(item)
 
-    # prints right regions
-    for item in right_regions:
-        print(item)
+    # # prints right regions
+    # for item in right_regions:
+    #     print(item)
 
     for file in NL_csv_files:
         filtered_data_1 = filter_left_regions(file, left_regions) # filters each file for left brain regions
@@ -137,10 +137,10 @@ if NL_csv_files:
             writer = csv.writer(output_csv_r)
             writer.writerows(filtered_data_2)
         
-        # prints if successful csv file creation
-        print(f"left matrix saved as {output_file_1}")
+        # # prints if successful csv file creation
+        # print(f"left matrix saved as {output_file_1}")
 
-        # prints if successful csv file creation
-        print(f"right matrix saved as {output_file_2}")
+        # # prints if successful csv file creation
+        # print(f"right matrix saved as {output_file_2}")
 else:
     print("No .csv files found")
