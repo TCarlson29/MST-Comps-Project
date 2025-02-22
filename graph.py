@@ -28,7 +28,7 @@ def maxlen(arg1, arg2, arg3):
 
 
 def timed(nodes, edges, phers, ratios):
-  amtTime = 30
+  amtTime = 31
   vals = ant.runAnt(nodes, edges, phers, ratios, True)
   print("Optimal: " + str(ant.truePrims(nodes, edges)))
   print("Amount of processor time: " + str(amtTime))
@@ -37,8 +37,8 @@ def timed(nodes, edges, phers, ratios):
 
   #GRAPHING OPT/TIME
   XbrodTime = np.array(vals[2][0])
-  print(XbrodTime)
-  print(len(XbrodTime))
+  # print(XbrodTime)
+  # print(len(XbrodTime))
   brodPoints = np.array(vals[0][0])
   XkruskTime = np.array(vals[2][1])
   kruskPoints = np.array(vals[0][1])
@@ -46,16 +46,7 @@ def timed(nodes, edges, phers, ratios):
   primPoints = np.array(vals[0][2])
   optPoints = np.array([vals[0][3]] * amtTime)
 
-  plt.xlabel("Processor Time (s)")
-  plt.ylabel("Total Tree Weight")
-
-  plt.plot(XbrodTime, brodPoints, label="broders")
-  plt.plot(XkruskTime, kruskPoints, label="kruskals")
-  plt.plot(XprimTime, primPoints, label="prims")
-  plt.plot(range(0, 30), optPoints, label="Optimal")
-
-  plt.legend(loc="upper right")
-  plt.show()
+  return [XbrodTime, brodPoints, XkruskTime, kruskPoints, XprimTime, primPoints, optPoints]
 
 def iterations(nodes, edges, phers, ratios):
   numIterations = 200
@@ -70,36 +61,12 @@ def iterations(nodes, edges, phers, ratios):
   primPoints = np.array(vals[0][2])
   optPoints = np.array([vals[0][3]] * numIterations)
 
-  plt.xlabel("Num iterations")
-  plt.ylabel("Total Tree Weight")
-
-  plt.plot(xpoints, brodPoints, label="broder")
-  plt.plot(xpoints, kruskPoints, label="kruskals")
-  plt.plot(xpoints, primPoints, label="prims")
-  plt.plot(xpoints, optPoints, label="optimal")
-
-  plt.legend(loc="upper right")
-  plt.show()
+  return [xpoints, brodPoints, kruskPoints, primPoints, optPoints]
 
   #vals = [[broderOpts, kruskalOpts, primOpts, curOptimal], deleteWeight, [broderTime, primTime, kruskalTime]]
 
 def alphaBeta(nodes, edges, phers):
-  # data_1 = np.random.normal(100, 10, 200)
-  # data_2 = np.random.normal(90, 20, 200)
-  # data_3 = np.random.normal(80, 30, 200)
-  # data_4 = np.random.normal(70, 40, 200)
-  # data = [data_1, data_2, data_3, data_4]
 
-  # fig = plt.figure(figsize =(10, 7))
-
-  # # Creating axes instance
-  # ax = fig.add_axes([0, 0, 1, 1])
-
-  # # Creating plot
-  # bp = ax.boxplot(data)
-
-  # # show plot
-  # plt.show()
   ratios = [[0,1], [1,2], [1,1], [2,1], [1,0]]
 
   # ratios = [0, 1]
@@ -124,12 +91,66 @@ def alphaBeta(nodes, edges, phers):
 
   #data = [[broderOpts, kruskalOpts, primOpts, curOptimal], deleteWeight, [broderTime, kruskalTime, primTime]]
 
-  
+  return totalData
 
+
+def graphFile(fileName):
+  with open(fileName, mode ='r')as file:
+    csvFile = csv.reader(file)
+    runType = None
+    for line in csvFile:
+      if runType:
+        data = line[0]
+      else:
+        runType = line[0]
+      # print(line)
+  ##TODO
+  # this is a string type???? convert out of it
+  print(type(data))
+  for i in data:
+    i = i.tolist()
+  print(data)
+  if runType == "Opt/It":
+    graphIt(data)
+  elif runType == "Opt/Time":
+    graphTime(data)
+  elif runType == "Opt/AB":
+    graphRatios(data)
+  else:
+    print("Erorr: invalid file structure.")
+    exit()
+  # print("Begin program")
+
+
+def graphTime(data):
+  plt.xlabel("Processor Time (s)")
+  plt.ylabel("Total Tree Weight")
+
+  plt.plot(data[0], data[1], label="broders")
+  plt.plot(data[2], data[3], label="kruskals")
+  plt.plot(data[4], data[5], label="prims")
+  plt.plot(range(0, 31), data[6], label="Optimal")
+
+  plt.legend(loc="upper right")
+  plt.show()
+
+def graphIt(data):
+  plt.xlabel("Num iterations")
+  plt.ylabel("Total Tree Weight")
+
+  plt.plot(data[0], data[1], label="broder")
+  plt.plot(data[0], data[2], label="kruskals")
+  plt.plot(data[0], data[3], label="prims")
+  plt.plot(data[0], data[4], label="optimal")
+
+  plt.legend(loc="upper right")
+  plt.show()
+
+def graphRatios(data):
   fig = plt.figure(figsize =(10, 7))
   ax = fig.add_subplot(111)
   # ax = fig.add_axes([0, 0, 1, 1]) #Don't know what this does
-  bp = ax.boxplot(totalData)
+  bp = ax.boxplot(data)
 
   ax.set_xticklabels(["Kruskal's", "Prim's"])
   plt.xlabel("Alpha/Beta Weights (s)")
@@ -138,16 +159,19 @@ def alphaBeta(nodes, edges, phers):
   plt.show()
 
 
-
 def main():
   ratios = []
   n = len(sys.argv)
-  if (n == 4):
-    print("Custom run initiated")
-    print("Alpha value: " + sys.argv[2])
-    print("Beta value: " + sys.argv[3])
-    ratios = [int(sys.argv[2]), int(sys.argv[3])]
+  # if (n == 4):
+  #   print("Custom run initiated")
+  #   print("Alpha value: " + sys.argv[2])
+  #   print("Beta value: " + sys.argv[3])
+  #   ratios = [int(sys.argv[2]), int(sys.argv[3])]
 
+  if (sys.argv[1] == "graphFile"):
+    graphFile(sys.argv[2])
+    exit()
+  
   nodes = []
   edges = []
   with open('full-mst-data.csv', mode ='r')as file:
@@ -164,16 +188,33 @@ def main():
   print("Begin program")
 
 
+  data = []
   if (sys.argv[1] == "Opt/It"):
-    iterations(nodes, edges, phers, ratios)
+    #return [xpoints, brodPoints, kruskPoints, primPoints, optPoints]
+    data = iterations(nodes, edges, phers, ratios)
+    graphIt(data)
+
   elif (sys.argv[1] == "Opt/Time"):
-    timed(nodes, edges, phers, ratios)
-  #TODO
-  # Change data lists to be algorithm-specific
+    #return [XbrodTime, brodPoints, XkruskTime, kruskPoints, XprimTime, primPoints, optPoints]
+    data = timed(nodes, edges, phers, ratios)
+    graphTime(data)
+
   elif (sys.argv[1] == "Opt/AB"):
-    alphaBeta(nodes, edges, phers)
+    # return [dataK, dataP]
+    data = alphaBeta(nodes, edges, phers)
+    graphRatios(data)
+
   else:
-    print("Invalid experimental type. Try again")
+    print("Error: Invalid experimental type. Try again")
+    exit()
+
+  myFile = csv.writer(open("curData.csv", "w"))
+  myFile.writerow([sys.argv[1]])
+  myFile.writerow([data])
+
+
+
+
 
 if __name__ == "__main__":
   main()
