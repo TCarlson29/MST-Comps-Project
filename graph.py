@@ -174,7 +174,7 @@ def main():
   
   nodes = []
   edges = []
-  with open('full-mst-data.csv', mode ='r')as file:
+  with open('./filter/filtered_EMCI_matrices/filtered_Patient1_connectivity_matrix.csv', mode ='r')as file:
     csvFile = csv.reader(file)
     x = 0
     for lines in csvFile:
@@ -182,7 +182,9 @@ def main():
         x +=1
       else:
         nodes.append(lines[0])
-        row = list(map(int, lines[1::]))
+        row = []
+        for edge in lines[1::]:
+          row.append(1 - abs(float(edge)))
         edges.append(row)
   phers = [[1] * len(edges)] * len(edges)
   print("Begin program")
@@ -210,7 +212,8 @@ def main():
 
   myFile = csv.writer(open("curData.csv", "w"))
   myFile.writerow([sys.argv[1]])
-  myFile.writerow([data])
+  for dat in data:
+    myFile.writerow([dat])
 
 
 
