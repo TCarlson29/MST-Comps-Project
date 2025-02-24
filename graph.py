@@ -6,6 +6,8 @@ import ant
 import matplotlib.pyplot as plt
 import numpy as np
 
+numIterations = 50
+amtTime = 31
 
 ##NOTE: PROGRAM needs one argument for which experiment to run. Options:
 ##    - "Opt/It": Optimality over iterations
@@ -14,6 +16,14 @@ import numpy as np
 
 #Future additions: alpha/beta ratios vs optimality
 
+
+
+def saveData(data, fileName):
+  myFile = csv.writer(open(fileName, "w"))
+  myFile.writerow([sys.argv[1]])
+  # print(data)
+  for dat in data:
+    myFile.writerow(dat)
 
 #returns the highest end-value list (used for graphing with variable data lengths)
 #not currently using?
@@ -28,8 +38,8 @@ def maxlen(arg1, arg2, arg3):
 
 
 def timed(nodes, edges, phers, ratios):
-  amtTime = 31
-  vals = ant.runAnt(nodes, edges, phers, ratios, True)
+  
+  vals = ant.runAnt(nodes, edges, phers, ratios, True, numIterations, amtTime)
   print("Optimal: " + str(ant.truePrims(nodes, edges)))
   print("Amount of processor time: " + str(amtTime))
 
@@ -49,9 +59,9 @@ def timed(nodes, edges, phers, ratios):
   return [XbrodTime, brodPoints, XkruskTime, kruskPoints, XprimTime, primPoints, optPoints]
 
 def iterations(nodes, edges, phers, ratios):
-  numIterations = 200
+  # numIterations = 200
     
-  vals = ant.runAnt(nodes, edges, phers, ratios, False)
+  vals = ant.runAnt(nodes, edges, phers, ratios, False, numIterations, amtTime)
   print("Optimal: " + str(ant.truePrims(nodes, edges)))
   print("Number of iterations: " + str(numIterations))
 
@@ -82,8 +92,8 @@ def alphaBeta(nodes, edges, phers):
   dataK = []
   dataP = []
   for ratio in ratios:
-    dataK.append(ant.calcWeight(ant.kruskalUpdate(nodes, edges, phers, ratio, False), edges))
-    dataP.append(ant.calcWeight(ant.primUpdate(nodes, edges, phers, ratio, False), edges))
+    dataK.append(ant.calcWeight(ant.kruskalUpdate(nodes, edges, phers, ratio, False, numIterations, amtTime), edges))
+    dataP.append(ant.calcWeight(ant.primUpdate(nodes, edges, phers, ratio, False, numIterations, amtTime), edges))
 
   totalData = [dataK, dataP]
   print("Optimal: " + str(ant.truePrims(nodes, edges)))
@@ -95,21 +105,17 @@ def alphaBeta(nodes, edges, phers):
 
 
 def graphFile(fileName):
+  data = []
   with open(fileName, mode ='r')as file:
     csvFile = csv.reader(file)
     runType = None
     for line in csvFile:
       if runType:
-        data = line[0]
+        data.append(list(map(float, line)))
       else:
         runType = line[0]
-      # print(line)
-  ##TODO
-  # this is a string type???? convert out of it
-  print(type(data))
-  for i in data:
-    i = i.tolist()
-  print(data)
+
+
   if runType == "Opt/It":
     graphIt(data)
   elif runType == "Opt/Time":
@@ -117,31 +123,69 @@ def graphFile(fileName):
   elif runType == "Opt/AB":
     graphRatios(data)
   else:
-    print("Erorr: invalid file structure.")
+    print("Error: invalid file structure.")
     exit()
   # print("Begin program")
 
 
+#graphing the data 
 def graphTime(data):
+
+  # plt.plot(data[0], data[1], label="broders")
+  # plt.plot(data[2], data[3], label="kruskals")
+  # plt.plot(data[4], data[5], label="prims")
+  # plt.plot(range(0, 31), data[6], label="Optimal")
+
+  # plt.legend(loc="upper right")
+  # plt.show()
+
+  #return [XbrodTime, brodPoints, XkruskTime, kruskPoints, XprimTime, primPoints, optPoints]
   plt.xlabel("Processor Time (s)")
   plt.ylabel("Total Tree Weight")
 
-  plt.plot(data[0], data[1], label="broders")
-  plt.plot(data[2], data[3], label="kruskals")
-  plt.plot(data[4], data[5], label="prims")
-  plt.plot(range(0, 31), data[6], label="Optimal")
+  optPoints = [data[0][6]]
+  XbrodTime = []
+  brodPoints  = []
+  XkruskTime  = []
+  kruskPoints  = []
+  XprimTime  = []
+  primPoints  = []
+  # brodPointAvg = [0] * len(data[0][0])
+  # kruskPointAvg = [0] * len(data[0][0])
+  # primPointAvg = [0] * len(data[0][0])
+  for dat in data:
+    XbrodTime = XbrodTime + dat[0]
+    brodPoints = brodPoints + dat[0]
+    XkruskTime = XkruskTime + dat[0]
+    kruskPoints = kruskPoints + dat[0]
+    XprimTime = XprimTime + dat[0]
+    primPoints = primPoints + dat[0]
+  plt.plot(XbrodTime, brodPoints, label="broder")
+  plt.plot(XkruskTime, kruskPoints, label="kruskals")
+  plt.plot(XprimTime, primPoints, label="prims")
+  plt.plot(range(0, 31), optPoints, label="optimal")
 
   plt.legend(loc="upper right")
   plt.show()
 
 def graphIt(data):
+  #return [xpoints, brodPoints, kruskPoints, primPoints, optPoints]
   plt.xlabel("Num iterations")
   plt.ylabel("Total Tree Weight")
 
-  plt.plot(data[0], data[1], label="broder")
-  plt.plot(data[0], data[2], label="kruskals")
-  plt.plot(data[0], data[3], label="prims")
-  plt.plot(data[0], data[4], label="optimal")
+  xpoints = [data[0][0]]
+  optPoints = [data[0][4]]
+  brodPointAvg = [0] * len(data[0][0])
+  kruskPointAvg = [0] * len(data[0][0])
+  primPointAvg = [0] * len(data[0][0])
+  for dat in data:
+    brodPointAvg = map(lambda x, y: x + y, brodPointAvg, dat[1])
+    kruskPointAvg = map(lambda x, y: x + y, kruskPointAvg, dat[2])
+    primPointAvg = map(lambda x, y: x + y, primPointAvg, dat[3])
+  plt.plot(xpoints, brodPointAvg, label="broder")
+  plt.plot(xpoints, kruskPointAvg, label="kruskals")
+  plt.plot(xpoints, primPointAvg, label="prims")
+  plt.plot(xpoints, optPoints, label="optimal")
 
   plt.legend(loc="upper right")
   plt.show()
@@ -171,51 +215,77 @@ def main():
   if (sys.argv[1] == "graphFile"):
     graphFile(sys.argv[2])
     exit()
-  
-  nodes = []
-  edges = []
-  with open('./filter/filtered_EMCI_matrices/filtered_Patient1_connectivity_matrix.csv', mode ='r')as file:
-    csvFile = csv.reader(file)
-    x = 0
-    for lines in csvFile:
-      if x == 0:
-        x +=1
-      else:
-        nodes.append(lines[0])
-        row = []
-        for edge in lines[1::]:
-          row.append(1 - abs(float(edge)))
-        edges.append(row)
-  phers = [[1] * len(edges)] * len(edges)
-  print("Begin program")
 
+  # myFile = csv.writer(open("savedData.csv", "w"))
+  # myFile.writerow([sys.argv[1]])
+  # print(data)
+  # for dat in data:
+  #   myFile.writerow(dat)
 
-  data = []
+  for fileNum in range(1, 3):
+    print("being next file")
+    nodes = []
+    edges = []
+    # with open('./filter/filtered_EMCI_matrices/filtered_Patient1_connectivity_matrix.csv', mode ='r')as file:
+    with open('./filter/filtered_EMCI_matrices/filtered_Patient' + str(fileNum) + '_connectivity_matrix.csv', mode ='r')as file:
+      csvFile = csv.reader(file)
+      x = 0
+      for lines in csvFile:
+        if x == 0:
+          x +=1
+        else:
+          nodes.append(lines[0])
+          row = []
+          for edge in lines[1::]:
+            row.append(1 - abs(float(edge)))
+          edges.append(row)
+
+          # edges.append(list(map(int, lines[1::])))  ##for test data
+
+    phers = [[1] * len(edges)] * len(edges)
+    print("Begin program")
+    data = []
+    if (sys.argv[1] == "Opt/It"):
+      #return [xpoints, brodPoints, kruskPoints, primPoints, optPoints]
+      data.append(iterations(nodes, edges, phers, ratios))
+      # saveData(data, fileName)
+      # graphIt(data)
+    elif (sys.argv[1] == "Opt/Time"):
+      #return [XbrodTime, brodPoints, XkruskTime, kruskPoints, XprimTime, primPoints, optPoints]
+      data.append(timed(nodes, edges, phers, ratios))
+      # saveData(data, fileName)
+      # graphTime(data)
+    elif (sys.argv[1] == "Opt/AB"):
+      # return [dataK, dataP]
+      data.append(alphaBeta(nodes, edges, phers))
+      # saveData(data, fileName)
+      # graphRatios(data)
+    else:
+      print("Error: Invalid experimental type. Try again")
+      exit()
+    # myFile.writerow(data)
+
+    
+
+  fileName = './curData/curData' + str(fileNum) + '_EMCI.csv'
   if (sys.argv[1] == "Opt/It"):
     #return [xpoints, brodPoints, kruskPoints, primPoints, optPoints]
-    data = iterations(nodes, edges, phers, ratios)
+    # data.append(iterations(nodes, edges, phers, ratios))
+    saveData(data, fileName)
     graphIt(data)
-
   elif (sys.argv[1] == "Opt/Time"):
     #return [XbrodTime, brodPoints, XkruskTime, kruskPoints, XprimTime, primPoints, optPoints]
-    data = timed(nodes, edges, phers, ratios)
+    # data.append(timed(nodes, edges, phers, ratios))
+    saveData(data, fileName)
     graphTime(data)
-
   elif (sys.argv[1] == "Opt/AB"):
     # return [dataK, dataP]
-    data = alphaBeta(nodes, edges, phers)
+    # data.append(alphaBeta(nodes, edges, phers))
+    saveData(data, fileName)
     graphRatios(data)
-
   else:
     print("Error: Invalid experimental type. Try again")
     exit()
-
-  myFile = csv.writer(open("curData.csv", "w"))
-  myFile.writerow([sys.argv[1]])
-  for dat in data:
-    myFile.writerow([dat])
-
-
 
 
 

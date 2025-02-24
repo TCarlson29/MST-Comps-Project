@@ -13,9 +13,9 @@ kruskalTime = []
 
 #code works by assuming graph is coming in as adjacency matrix
 
-# curOptimal = 12148
-maxTime = 30
-maxIterations = 200
+# # curOptimal = 12148
+# maxTime = 30
+# maxIterations = 200
 
 #actual running of prims to test optimality
 def truePrims(nodes, edges):
@@ -52,7 +52,7 @@ def truePrims(nodes, edges):
 #   return runAnt(nodes, edges, phers, ratios)
 
 #needs to be able to update graph weights 
-def runAnt(nodes, edges, phers, ratios, isTimed):
+def runAnt(nodes, edges, phers, ratios, isTimed, maxIterations, maxTime):
   curOptimal = truePrims(nodes, edges)
   print("runAnt begun")
 
@@ -68,20 +68,20 @@ def runAnt(nodes, edges, phers, ratios, isTimed):
     primRatios = ratios
   
   brodStart = process_time()
-  broderTree = broderUpdate(nodes, edges, phers, broderRatios, isTimed)
+  broderTree = broderUpdate(nodes, edges, phers, broderRatios, isTimed, maxIterations, maxTime)
   # broderTree = []
   brodEnd = process_time()
   print("broderDone")
   print("brod total time elapsed: " + str(brodEnd - brodStart))
 
   kruskStart = process_time()
-  kruskalTree = kruskalUpdate(nodes, edges, phers, kruskRatios, isTimed)
+  kruskalTree = kruskalUpdate(nodes, edges, phers, kruskRatios, isTimed, maxIterations, maxTime)
   kruskEnd = process_time()
   print("KruskalDone")
   print("krusk total time elapsed: " + str(kruskEnd - kruskStart))
 
   primStart = process_time()
-  primTree = primUpdate(nodes, edges, phers, primRatios, isTimed)
+  primTree = primUpdate(nodes, edges, phers, primRatios, isTimed, maxIterations, maxTime)
   primEnd = process_time()
   print("prim Done")
   print("prim total time elapsed: " + str(primEnd - primStart))
@@ -116,10 +116,11 @@ def runAnt(nodes, edges, phers, ratios, isTimed):
 
 
 # runs iterations of broderConstruct and updates pheromone values
-def broderUpdate(nodes, edges, phers, ratios, isTimed):
+def broderUpdate(nodes, edges, phers, ratios, isTimed, maxIterations, maxTime):
   i = 0
   start = process_time()
   broderBounds = [1, pow(len(nodes), 3) * 1]
+  # print("hello")
   broderTree = broderConstruction(nodes, edges, phers, ratios)
   end = process_time()
   bestWeight = calcWeight(broderTree, edges)
@@ -128,6 +129,7 @@ def broderUpdate(nodes, edges, phers, ratios, isTimed):
   # print("POWER TEST: " + str(pow(3, 2)))
   # broderBounds = [1, (len(nodes))^3 * 1]
 
+  # print("hello")
   while (i < maxIterations):
     # print(isTimed)
     broderTime.append(end - start)
@@ -151,7 +153,7 @@ def broderUpdate(nodes, edges, phers, ratios, isTimed):
   return broderTree
 
 # runs iterations of kruskalConstruct and updates pheromone values
-def kruskalUpdate(nodes, edges, phers, ratios, isTimed):
+def kruskalUpdate(nodes, edges, phers, ratios, isTimed, maxIterations, maxTime):
   i = 0
   start = process_time()
   kruskalTree = kruskalConstruction(nodes, edges, phers, ratios)
@@ -185,7 +187,7 @@ def kruskalUpdate(nodes, edges, phers, ratios, isTimed):
   return kruskalTree
 
 # runs iterations of primConstruct and updates pheromone values
-def primUpdate(nodes, edges, phers, ratios, isTimed):
+def primUpdate(nodes, edges, phers, ratios, isTimed, maxIterations, maxTime):
   i = 0
   start = process_time()
   primTree = primConstruction(nodes, edges, phers, ratios)
@@ -229,6 +231,7 @@ def broderConstruction(nodes, edges, phers, ratios):
 
   while (False in nodesVisited):
     totalWeight = 0
+    # print("sucks")
 
     #get all edges that connect to curNode
     for edgeIndex in range(len(edges[curNodeIndex])):
@@ -243,6 +246,7 @@ def broderConstruction(nodes, edges, phers, ratios):
     num = random.random()
     totalProb = 0
     vIndex = 0
+    # print("what")
     #calculate which neighbor to go to
     for edgeIndex in range(len(edges[curNodeIndex])):
       if (edges[curNodeIndex][edgeIndex] == 0):
@@ -254,9 +258,12 @@ def broderConstruction(nodes, edges, phers, ratios):
       if (totalProb > num):
         vIndex = edgeIndex
         break
+
+    # print(vIndex)
     
     #add neighbor to tree if not visited, change curNode to neighbor
     if nodesVisited[vIndex] == False:
+      # print("making em True")
       # print("neighbor added: " + str(vIndex))
       tree.append([curNodeIndex, vIndex])
       nodesVisited[vIndex] = True
