@@ -6,7 +6,7 @@ import ant
 import matplotlib.pyplot as plt
 import numpy as np
 
-numIterations = 50
+numIterations = 200
 amtTime = 31
 ratios = [[0,1], [1,2], [1,1], [2,1], [1,0]]
 
@@ -209,19 +209,21 @@ def graphIt(data):
   plt.xlabel("Num iterations")
   plt.ylabel("Total Tree Weight")
 
-  xpoints = [data[0][0]]
-  optPoints = [data[0][4]]
+  xpoints = data[0][0]
+  # print(xpoints)
+  optPoints = data[0][4]
   brodPointAvg = [0] * len(data[0][0])
   kruskPointAvg = [0] * len(data[0][0])
   primPointAvg = [0] * len(data[0][0])
   for dat in data:
-    brodPointAvg = map(lambda x, y: x + y, brodPointAvg, dat[1])
-    kruskPointAvg = map(lambda x, y: x + y, kruskPointAvg, dat[2])
-    primPointAvg = map(lambda x, y: x + y, primPointAvg, dat[3])
+    brodPointAvg = list(map(lambda x, y: x + y, brodPointAvg, dat[1]))
+    # print(brodPointAvg)
+    kruskPointAvg = list(map(lambda x, y: x + y, kruskPointAvg, dat[2]))
+    primPointAvg = list(map(lambda x, y: x + y, primPointAvg, dat[3]))
 
-  brodPointAvg = map(lambda x: x/len(data), brodPointAvg)
-  kruskPointAvg = map(lambda x: x/len(data), kruskPointAvg)
-  primPointAvg = map(lambda x: x/len(data), primPointAvg)
+  brodPointAvg = list(map(lambda x: x/len(data), brodPointAvg))
+  kruskPointAvg = list(map(lambda x: x/len(data), kruskPointAvg))
+  primPointAvg = list(map(lambda x: x/len(data), primPointAvg))
   plt.plot(xpoints, brodPointAvg, label="broder")
   plt.plot(xpoints, kruskPointAvg, label="kruskals")
   plt.plot(xpoints, primPointAvg, label="prims")
@@ -263,7 +265,7 @@ def main():
   #   myFile.writerow(dat)
 
   data = []
-  for fileNum in range(5, 30):
+  for fileNum in range(1, 30):
     print("being next file")
     nodes = []
     edges = []
