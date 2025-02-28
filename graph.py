@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 numIterations = 200
-amtTime = 31
+amtTime = 120
 ratios = [[0,1], [1,2], [1,1], [2,1], [1,0]]
 
 ##NOTE: PROGRAM needs one argument for which experiment to run. Options:
@@ -224,10 +224,10 @@ def graphIt(data):
   brodPointAvg = list(map(lambda x: x/len(data), brodPointAvg))
   kruskPointAvg = list(map(lambda x: x/len(data), kruskPointAvg))
   primPointAvg = list(map(lambda x: x/len(data), primPointAvg))
-  plt.plot(xpoints, brodPointAvg, label="broder")
-  plt.plot(xpoints, kruskPointAvg, label="kruskals")
-  plt.plot(xpoints, primPointAvg, label="prims")
-  plt.plot(xpoints, optPoints, label="optimal")
+  plt.plot(xpoints, brodPointAvg, label="broder", color="#9A5B86")
+  plt.plot(xpoints, kruskPointAvg, label="kruskals", color="#00538F")
+  plt.plot(xpoints, primPointAvg, label="prims", color="#1A936F")
+  plt.plot(xpoints, optPoints, label="optimal", color="#B6A391")
 
   plt.legend(loc="upper right")
   plt.show()
@@ -238,7 +238,7 @@ def graphRatios(data):
   # ax = fig.add_axes([0, 0, 1, 1]) #Don't know what this does
   bp = ax.boxplot(data)
 
-  ax.set_xticklabels(["Kruskal's", "Prim's"])
+  ax.set_xticklabels(["Broder's", "Kruskal's", "Prim's"])
   plt.xlabel("Alpha/Beta Weights (s)")
   plt.ylabel("Total Tree Weight")
   plt.legend(loc="upper right")
@@ -266,11 +266,11 @@ def main():
 
   data = []
   for fileNum in range(1, 30):
-    print("being next file")
+    print("\n\nbegin next file")
     nodes = []
     edges = []
     # with open('./filter/filtered_EMCI_matrices/filtered_Patient1_connectivity_matrix.csv', mode ='r')as file:
-    with open('./filter/filtered_EMCI_matrices/filtered_Patient' + str(fileNum) + '_connectivity_matrix.csv', mode ='r')as file:
+    with open('./filter/filtered_NL_matrices/filtered_Patient' + str(fileNum) + '_connectivity_matrix.csv', mode ='r')as file:
       csvFile = csv.reader(file)
       x = 0
       for lines in csvFile:
@@ -298,7 +298,7 @@ def main():
       # saveData(data, fileName)
       # graphTime(data)
     elif (sys.argv[1] == "Opt/AB"):
-      # return [dataK, dataP]
+      # return [dataB, dataK, dataP]
       data.append([alphaBeta(nodes, edges, phers)])
       # saveData(data, fileName)
       # graphRatios(data)
@@ -322,7 +322,7 @@ def main():
     saveData(data, fileName)
     graphTime(data)
   elif (sys.argv[1] == "Opt/AB"):
-    # return [dataK, dataP]
+    # return [dataB, dataK, dataP]
     # data.append(alphaBeta(nodes, edges, phers))
     saveData(data, fileName)
     graphRatios(data)
