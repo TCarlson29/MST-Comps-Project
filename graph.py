@@ -6,8 +6,8 @@ import ant
 import matplotlib.pyplot as plt
 import numpy as np
 
-numIterations = 50
-amtTime = 31
+numIterations = 200
+amtTime = 120
 ratios = [[0,1], [1,2], [1,1], [2,1], [1,0]]
 
 ##NOTE: PROGRAM needs one argument for which experiment to run. Options:
@@ -209,23 +209,25 @@ def graphIt(data):
   plt.xlabel("Num iterations")
   plt.ylabel("Total Tree Weight")
 
-  xpoints = [data[0][0]]
-  optPoints = [data[0][4]]
+  xpoints = data[0][0]
+  # print(xpoints)
+  optPoints = data[0][4]
   brodPointAvg = [0] * len(data[0][0])
   kruskPointAvg = [0] * len(data[0][0])
   primPointAvg = [0] * len(data[0][0])
   for dat in data:
-    brodPointAvg = map(lambda x, y: x + y, brodPointAvg, dat[1])
-    kruskPointAvg = map(lambda x, y: x + y, kruskPointAvg, dat[2])
-    primPointAvg = map(lambda x, y: x + y, primPointAvg, dat[3])
+    brodPointAvg = list(map(lambda x, y: x + y, brodPointAvg, dat[1]))
+    # print(brodPointAvg)
+    kruskPointAvg = list(map(lambda x, y: x + y, kruskPointAvg, dat[2]))
+    primPointAvg = list(map(lambda x, y: x + y, primPointAvg, dat[3]))
 
-  brodPointAvg = map(lambda x: x/len(data), brodPointAvg)
-  kruskPointAvg = map(lambda x: x/len(data), kruskPointAvg)
-  primPointAvg = map(lambda x: x/len(data), primPointAvg)
-  plt.plot(xpoints, brodPointAvg, label="broder")
-  plt.plot(xpoints, kruskPointAvg, label="kruskals")
-  plt.plot(xpoints, primPointAvg, label="prims")
-  plt.plot(xpoints, optPoints, label="optimal")
+  brodPointAvg = list(map(lambda x: x/len(data), brodPointAvg))
+  kruskPointAvg = list(map(lambda x: x/len(data), kruskPointAvg))
+  primPointAvg = list(map(lambda x: x/len(data), primPointAvg))
+  plt.plot(xpoints, brodPointAvg, label="broder", color="#9A5B86")
+  plt.plot(xpoints, kruskPointAvg, label="kruskals", color="#00538F")
+  plt.plot(xpoints, primPointAvg, label="prims", color="#1A936F")
+  plt.plot(xpoints, optPoints, label="optimal", color="#B6A391")
 
   plt.legend(loc="upper right")
   plt.show()
@@ -236,7 +238,7 @@ def graphRatios(data):
   # ax = fig.add_axes([0, 0, 1, 1]) #Don't know what this does
   bp = ax.boxplot(data)
 
-  ax.set_xticklabels(["Kruskal's", "Prim's"])
+  ax.set_xticklabels(["Broder's", "Kruskal's", "Prim's"])
   plt.xlabel("Alpha/Beta Weights (s)")
   plt.ylabel("Total Tree Weight")
   plt.legend(loc="upper right")
@@ -263,12 +265,12 @@ def main():
   #   myFile.writerow(dat)
 
   data = []
-  for fileNum in range(5, 30):
-    print("being next file")
+  for fileNum in range(1, 30):
+    print("\n\nbegin next file")
     nodes = []
     edges = []
     # with open('./filter/filtered_EMCI_matrices/filtered_Patient1_connectivity_matrix.csv', mode ='r')as file:
-    with open('./filter/filtered_EMCI_matrices/filtered_Patient' + str(fileNum) + '_connectivity_matrix.csv', mode ='r')as file:
+    with open('./filter/filtered_NL_matrices/filtered_Patient' + str(fileNum) + '_connectivity_matrix.csv', mode ='r')as file:
       csvFile = csv.reader(file)
       x = 0
       for lines in csvFile:
@@ -296,7 +298,7 @@ def main():
       # saveData(data, fileName)
       # graphTime(data)
     elif (sys.argv[1] == "Opt/AB"):
-      # return [dataK, dataP]
+      # return [dataB, dataK, dataP]
       data.append([alphaBeta(nodes, edges, phers)])
       # saveData(data, fileName)
       # graphRatios(data)
@@ -320,7 +322,7 @@ def main():
     saveData(data, fileName)
     graphTime(data)
   elif (sys.argv[1] == "Opt/AB"):
-    # return [dataK, dataP]
+    # return [dataB, dataK, dataP]
     # data.append(alphaBeta(nodes, edges, phers))
     saveData(data, fileName)
     graphRatios(data)
