@@ -42,8 +42,10 @@ def draw_graph(graph, pos, fig_num):
     plt.show()
     
 folder_path = "/Users/reedschubert/Desktop/Data/treeData/NL" 
+folder_path2 = "/Users/reedschubert/Desktop/Data/treeData/EMCI" 
 fixed_pos = None
 fig_num = 1
+other_num = 1
 
 for file_name in os.listdir(folder_path):
     file_path = os.path.join(folder_path, file_name)
@@ -61,3 +63,21 @@ for file_name in os.listdir(folder_path):
 
             draw_graph(G, fixed_pos, fig_num)
             fig_num += 1
+
+for file_name in os.listdir(folder_path2):
+    file_path2 = os.path.join(folder_path2, file_name)
+    if os.path.isfile(file_path2):
+        edges2 = read_edges_from_file(file_path2) #Gets edges
+        
+        if edges2:
+            G = nx.Graph()
+            G.add_nodes_from(range(len(nodes)))
+            G.add_edges_from(edges2)
+
+            # Makes sure the structure of the graph is the same for all graphs
+            if fixed_pos is None:
+                fixed_pos = nx.fruchterman_reingold_layout(G, seed=42, k=0.8) 
+
+            draw_graph(G, fixed_pos, other_num)
+            other_num += 1
+
