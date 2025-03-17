@@ -28,7 +28,7 @@ def read_edges_from_file(file_path):
                 edges.append([int(edge[0].strip()), int(edge[1].strip())]) #Convert to integer form
     return edges
 
-# Function to draw the graph
+#Function to draw the graph
 def draw_graph(graph, pos, fig_num):
     fig, ax = plt.subplots(num=fig_num, figsize=(6, 5), facecolor='none')
     ax.set_facecolor('none')  
@@ -57,7 +57,7 @@ for file_name in os.listdir(folder_path):
             G.add_nodes_from(range(len(nodes)))
             G.add_edges_from(edges)
 
-            # Makes sure the structure of the graph is the same for all graphs
+            #Makes sure the structure of the graph is the same for all graphs
             if fixed_pos is None:
                 fixed_pos = nx.fruchterman_reingold_layout(G, seed=42, k=0.8) 
 
@@ -67,7 +67,7 @@ for file_name in os.listdir(folder_path):
 for file_name in os.listdir(folder_path2):
     file_path2 = os.path.join(folder_path2, file_name)
     if os.path.isfile(file_path2):
-        edges2 = read_edges_from_file(file_path2) #Gets edges
+        edges2 = read_edges_from_file(file_path2) 
         
         if edges2:
             G = nx.Graph()
