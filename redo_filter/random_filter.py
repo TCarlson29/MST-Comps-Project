@@ -35,8 +35,8 @@ NL_csv_files = [
             'NL_data/Patient28_connectivity_matrix.csv', 'NL_data/Patient29_connectivity_matrix.csv'
             ]
 
-'''
-# creates the folder name for the split matrices
+
+# creates the directories to store random split matrices
 random_filter_NL = 'NL_random_split_matrices'
 random_filter_EMCI = 'EMCI_random_split_matrices'
 
@@ -47,69 +47,9 @@ if not os.path.exists(random_filter_NL):
 if not os.path.exists(random_filter_EMCI):
     os.makedirs(random_filter_EMCI)
 
-def read_first_column(file_path):
-    cols = set() # used set because it doesn't allow for duplicate values
-
-    if file_path.endswith('.csv'): # checks if the input is csv file
-        with open (file_path, mode='r', newline='', encoding='utf-8') as csv_file:
-            reader = csv.reader(csv_file)
-            for row in reader:
-                if row: # make sure row isn't empty
-                    cols.add(row[0]) # adds the first column to the set
-
-    return cols
-
-# splits the first column into a given number of random cols that is divisible by 5
-# also adds the corresponding row and col values
-def random_split_cols(file_path, num_random_cols):
-    random_cols = []
-    col_values = []
-
-    # error check to make sure cols can only be random blocks of 5
-    if (num_random_cols % 5 != 0):
-        print("number must be divisible by 5")
-
-    # adds the column names
-    for col in read_first_column(file_path):
-        col_values.append(col)
-    
-    selected_cols = random.sample(col_values, num_random_cols)
-
-    for i in range(0, len(selected_cols), 5):
-        random_cols.append(selected_cols[i:i+5])
-
-    return random_cols
-
-if NL_csv_files:
-    for file in NL_csv_files:
-
-        output_file = os.path.join(random_filter_NL, f"universal_regions_{os.path.basename(file)}")
-
-        with open(output_file, mode='w', newline='', encoding='utf-8') as out_file:
-            writer = csv.writer(out_file)
-
-            for num_rand_cols in range(5, 146, 5):
-                random_blocks = random_split_cols(file, num_rand_cols)
-
-                if random_blocks:
-                    for block in random_blocks:
-                        writer.writerow(block)  # Write each block as a row in the CSV file
-        
-        # prints if successful csv file creation
-        print(f"Filtered matrix saved as {output_file}")
-'''
-
-# Directories to store random split matrices
-random_filter_NL = 'NL_random_split_matrices'
-random_filter_EMCI = 'EMCI_random_split_matrices'
-
-# Ensure directories exist
-os.makedirs(random_filter_NL, exist_ok=True)
-os.makedirs(random_filter_EMCI, exist_ok=True)
-
 # Read the matrix, including labels from the first row and column, but skip the first row (column labels)
 def read_matrix_with_labels(file_path):
-    labels = []  # To store row labels (first column)
+    labels = []  # To store labels (first column)
     matrix = []  # To store the matrix values
 
     with open(file_path, mode='r', newline='', encoding='utf-8') as csv_file:
@@ -120,8 +60,14 @@ def read_matrix_with_labels(file_path):
 
         for row in reader:
             if row:
-                labels.append(row[0])  # First column as row label
-                matrix.append([float(val) if val else 0.0 for val in row[1:]])  # Matrix values (ignoring first column)
+                labels.append(row[0])
+                row_values = []
+                for val in row[1:]:
+                    if val:  # Check if the value is not empty
+                        row_values.append(float(val))
+                    else:
+                        row_values.append(0.0)
+                matrix.append(row_values)
 
     return labels, matrix
 
@@ -135,15 +81,30 @@ def random_chunk_from_matrix(matrix, labels, chunk_size):
         print(f"Error: Chunk size {chunk_size} exceeds matrix size {num_rows}x{num_cols}")
         return []
 
-    # Randomly select unique, non-contiguous indices for both rows and columns
-    selected_indices = random.sample(range(num_rows), chunk_size)  # Select chunk_size number of indices randomly
+    # Randomly select unique indices for both rows and columns
+    selected_indices = random.sample(range(num_rows), chunk_size)
 
     # Extract the chunk of the matrix using the selected row and column indices
-    chunk_matrix = [[matrix[row_idx][col_idx] for col_idx in selected_indices] for row_idx in selected_indices]
+    chunk_matrix = []
+    # Loop over the selected row indices
+    for row_idx in selected_indices:
+        row_chunk = []
+
+        for col_idx in selected_indices:
+            # Append the corresponding value from the matrix to the row chunk
+            row_chunk.append(matrix[row_idx][col_idx])
+        
+        chunk_matrix.append(row_chunk)
     
-    # Extract the corresponding labels for rows and columns
-    chunk_row_labels = [labels[row_idx] for row_idx in selected_indices]
-    chunk_col_labels = [labels[col_idx] for col_idx in selected_indices]
+    # Extract the corresponding labels for rows
+    chunk_row_labels = []
+    for row_idx in selected_indices:
+        chunk_row_labels.append(labels[row_idx])
+
+    # Extract the corresponding labels for columns
+    chunk_col_labels = []
+    for col_idx in selected_indices:
+        chunk_col_labels.append(labels[col_idx])
 
     return chunk_row_labels, chunk_col_labels, chunk_matrix
 
