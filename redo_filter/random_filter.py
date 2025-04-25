@@ -136,7 +136,7 @@ def process_files(csv_files, output_folder):
 
         # Generate and save random chunks of different sizes
         for chunk_size in range(5, 146, 5):
-            output_file = os.path.join(patient_folder, f"{patient_name}_random_chunk_{chunk_size}x{chunk_size}.csv")
+            output_file = os.path.join(patient_folder, f"{patient_name}_random_chunk_{chunk_size}.csv")
             chunk_row_labels, chunk_col_labels, chunk_matrix = random_chunk_from_matrix(matrix, labels, chunk_size)
 
             # Save the chunk to the CSV file
