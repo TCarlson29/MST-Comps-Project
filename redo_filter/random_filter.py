@@ -82,6 +82,7 @@ def random_chunk_from_matrix(matrix, labels, chunk_size):
         return []
 
     # Randomly select unique indices for both rows and columns
+    random.seed(74) # sets the random selection so it doesn't change every time I run this function
     selected_indices = random.sample(range(num_rows), chunk_size)
 
     # Extract the chunk of the matrix using the selected row and column indices
