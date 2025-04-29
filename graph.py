@@ -1,7 +1,8 @@
 import math, random
 import csv, sys
-from time import process_time
+import time
 import ant
+import os
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -35,7 +36,7 @@ def saveData(data, fileName):
   # print(data)
   for dat in data: 
     for d in dat:
-      myFile.writerows(d)
+      myFile.writerows([d])
 
 #returns the highest end-value list (used for graphing with variable data lengths)
 #not currently using?
@@ -166,6 +167,12 @@ def graphTime(data):
   plt.xlabel("Processor Time (s)")
   plt.ylabel("Total Tree Weight")
 
+  # Basic check for structure
+  if len(data[0]) != 5:
+    print("Error: Expected 5 elements in data[0], but got", len(data[0]))
+    print("Contents of data[0]:", data[0])
+    return  # Exit the function early to prevent crashing
+
   # print("start\n")
   # print(data[0][0][0]) 
   optPoints = data[0][6]
@@ -203,11 +210,18 @@ def graphTime(data):
 
   plt.legend(loc="upper right")
   plt.show()
+  exit()
 
 def graphIt(data):
   #return [xpoints, brodPoints, kruskPoints, primPoints, optPoints]
   plt.xlabel("Num iterations")
   plt.ylabel("Total Tree Weight")
+
+  # Basic check for structure
+  if len(data[0]) != 5:
+    print("Error: Expected 5 elements in data[0], but got", len(data[0]))
+    print("Contents of data[0]:", data[0])
+    return  # Exit the function early to prevent crashing
 
   xpoints = data[0][0]
   # print(xpoints)
@@ -231,6 +245,7 @@ def graphIt(data):
 
   plt.legend(loc="upper right")
   plt.show()
+  exit()
 
 def graphRatios(data):
   fig = plt.figure(figsize =(10, 7))
@@ -243,6 +258,70 @@ def graphRatios(data):
   plt.ylabel("Total Tree Weight")
   plt.legend(loc="upper right")
   plt.show()
+
+def graphRunTime():
+    # helps with the ordering of the matrix files (for whatever reason they are put in some random order)
+    from natsort import natsorted
+
+    # path to matrices
+    folder_path = './redo_filter/EMCI_random_split_matrices/Patient1'
+    # folder_path = './redo_filter/NL_random_split_matrices/Patient1'
+    matrix_files = [f for f in os.listdir(folder_path) if f.endswith('.csv')]
+    matrix_files = natsorted(matrix_files)
+    
+    broder_times = []
+    kruskal_times = []
+    prim_times = []
+    sizes = []
+
+    for file_name in matrix_files:
+        print(f"Testing file: {file_name}")
+        nodes = []
+        edges = []
+        with open(os.path.join(folder_path, file_name), mode='r') as file:
+            csvFile = csv.reader(file)
+            x = 0
+            for lines in csvFile:
+                if x == 0:
+                    x += 1
+                else:
+                    nodes.append(lines[0])
+                    row = []
+                    for edge in lines[1:]:
+                        row.append(1 - abs(float(edge)))
+                    edges.append(row)
+
+        phers = [[1 for _ in range(len(edges))] for _ in range(len(edges))]
+        ratio = [1, 1]
+
+        sizes.append(len(nodes))  # Number of nodes in the graph
+
+        # Broder
+        start = time.process_time()
+        ant.broderUpdate(nodes, edges, phers, ratio, False, 1, 1)
+        broder_times.append(time.process_time() - start)
+
+        # Kruskal
+        start = time.process_time()
+        ant.kruskalUpdate(nodes, edges, phers, ratio, False, 1, 1)
+        kruskal_times.append(time.process_time() - start)
+
+        # Prim
+        start = time.process_time()
+        ant.primUpdate(nodes, edges, phers, ratio, False, 1, 1)
+        prim_times.append(time.process_time() - start)
+
+    # Plotting
+    plt.figure()
+    plt.plot(sizes, broder_times, label="Broder's", color="#9A5B86")
+    plt.plot(sizes, kruskal_times, label="Kruskal's", color="#00538F")
+    plt.plot(sizes, prim_times, label="Prim's", color="#1A936F")
+    plt.xlabel("Number of Nodes")
+    plt.ylabel("Processor Time (seconds)")
+    plt.title("Algorithm Running Time vs. Matrix Size")
+    plt.legend()
+    plt.grid(True)
+    plt.show()
 
 
 def main():
@@ -265,12 +344,14 @@ def main():
   #   myFile.writerow(dat)
 
   data = []
-  for fileNum in range(1, 30):
+  for fileNum in range(1, 10):
     print("\n\nbegin next file")
     nodes = []
     edges = []
     # with open('./filter/filtered_EMCI_matrices/filtered_Patient1_connectivity_matrix.csv', mode ='r')as file:
-    with open('./filter/filtered_NL_matrices/filtered_Patient' + str(fileNum) + '_connectivity_matrix.csv', mode ='r')as file:
+    with open('./redo_filter/NL_random_split_matrices/Patient1/Patient1_random_chunk_' + str(fileNum * 5) + '.csv', mode = 'r')as file:
+    # with open('./filter/filtered_NL_matrices/filtered_Patient' + str(fileNum) + '_connectivity_matrix.csv', mode ='r')as file:
+      print("filename: ", file)
       csvFile = csv.reader(file)
       x = 0
       for lines in csvFile:
@@ -289,7 +370,7 @@ def main():
     print("Begin program")
     if (sys.argv[1] == "Opt/It"):
       #return [xpoints, brodPoints, kruskPoints, primPoints, optPoints]
-      data.append([iterations(nodes, edges, phers, ratios)])
+      data.append(iterations(nodes, edges, phers, ratios))
       # saveData(data, fileName)
       # graphIt(data)
     elif (sys.argv[1] == "Opt/Time"):
@@ -302,6 +383,9 @@ def main():
       data.append([alphaBeta(nodes, edges, phers)])
       # saveData(data, fileName)
       # graphRatios(data)
+    elif (sys.argv[1] == "RunTime"):
+      graphRunTime()
+      exit()
     else:
       print("Error: Invalid experimental type. Try again")
       exit()
@@ -326,6 +410,10 @@ def main():
     # data.append(alphaBeta(nodes, edges, phers))
     saveData(data, fileName)
     graphRatios(data)
+  elif (sys.argv[1] == "RunTime"):
+    saveData(data, fileName)
+    graphRunTime()
+    exit()
   else:
     print("Error: Invalid experimental type. Try again")
     exit()
